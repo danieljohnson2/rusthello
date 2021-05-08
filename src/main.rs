@@ -1,15 +1,41 @@
 use cursive::*;
 use std::ops::*;
+use std::string::*;
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+enum Cell {
+    Empty,
+    White,
+    Black
+}
+
+impl Cell {
+    fn to_str(self) -> &'static str {
+        match self {
+            Cell::Empty => " ",
+            Cell::White => "O",
+            Cell::Black => "X"
+        }
+    }    
+}
+
+impl ToString for Cell {
+    fn to_string(&self) -> String {
+        self.to_str().to_owned()
+    }
+}
 
 struct Board {
     width: usize,
     height: usize,
-    cells: Vec<char>,
+    cells: Vec<Cell>,
 }
 
 impl Board {
     fn new(width: usize, height: usize) -> Board {
-        let cells = vec![' '; width * height];
+        use Cell::*;
+        
+        let cells = vec![Empty; width * height];
 
         let mut board = Board {
             width,
@@ -18,17 +44,17 @@ impl Board {
         };
 
         let center = Vec2::new(width / 2, height / 2);
-        board[Vec2::new(center.x, center.y)] = 'X';
-        board[Vec2::new(center.x - 1, center.y - 1)] = 'X';
-        board[Vec2::new(center.x, center.y - 1)] = 'O';
-        board[Vec2::new(center.x - 1, center.y)] = 'O';
+        board[Vec2::new(center.x, center.y)] = Black;
+        board[Vec2::new(center.x - 1, center.y - 1)] = Black;
+        board[Vec2::new(center.x, center.y - 1)] = White;
+        board[Vec2::new(center.x - 1, center.y)] = White;
 
         board
     }
 }
 
 impl Index<Vec2> for Board {
-    type Output = char;
+    type Output = Cell;
 
     fn index(&self, index: Vec2) -> &Self::Output {
         let idx = index.y * self.height + index.x;
