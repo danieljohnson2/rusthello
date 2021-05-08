@@ -1,3 +1,5 @@
+use cursive::event::*;
+use cursive::theme::*;
 use cursive::*;
 use std::ops::*;
 use std::string::*;
@@ -6,7 +8,7 @@ use std::string::*;
 enum Cell {
     Empty,
     White,
-    Black
+    Black,
 }
 
 impl Cell {
@@ -14,9 +16,9 @@ impl Cell {
         match self {
             Cell::Empty => " ",
             Cell::White => "O",
-            Cell::Black => "X"
+            Cell::Black => "X",
         }
-    }    
+    }
 }
 
 impl ToString for Cell {
@@ -34,7 +36,7 @@ struct Board {
 impl Board {
     fn new(width: usize, height: usize) -> Board {
         use Cell::*;
-        
+
         let cells = vec![Empty; width * height];
 
         let mut board = Board {
@@ -71,11 +73,18 @@ impl IndexMut<Vec2> for Board {
 
 struct BoardView {
     board: Board,
+    cursor: Vec2,
 }
 
 impl BoardView {
     fn new(board: Board) -> BoardView {
-        BoardView { board }
+        let cursor = Vec2::new(board.width / 2, board.height / 2);
+        BoardView { board, cursor }
+    }
+
+    fn move_cursor(&mut self, dx: isize, dy: isize) {
+        self.cursor.x = (self.cursor.x as isize + dx) as usize;
+        self.cursor.y = (self.cursor.y as isize + dy) as usize;
     }
 }
 
@@ -85,19 +94,43 @@ impl View for BoardView {
 
         for y in 0..board.height {
             for x in 0..board.width {
-                let loc = XY::new(x * 2, y * 2);
-                printer.print(loc, "+-+");
-                printer.print(loc + XY::new(0, 1), "| |");
-                printer.print(loc + XY::new(0, 2), "+-+");
+                let loc = XY::new(x * 2 + 1, y * 2 + 1);
+                printer.print(Vec2::new(loc.x - 1, loc.y - 1), "+-+");
+                printer.print(Vec2::new(loc.x - 1, loc.y), "| |");
+                printer.print(Vec2::new(loc.x - 1, loc.y + 1), "+-+");
 
                 let cell = board[Vec2::new(x, y)];
-                printer.print(loc + XY::new(1, 1), &cell.to_string());
+
+                if x == self.cursor.x && y == self.cursor.y {
+                    printer.with_color(ColorStyle::back(Color::Light(BaseColor::White)), |p| {
+                        p.print(loc, &cell.to_string())
+                    });
+                } else {
+                    printer.print(loc, &cell.to_string());
+                }
             }
         }
     }
 
     fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
         Vec2::new(self.board.width * 2 + 1, self.board.height * 2 + 1)
+    }
+
+    fn on_event(&mut self, event: Event) -> EventResult {
+        use EventResult::*;
+
+        return match event {
+            Event::Key(Key::Up) => move_cursor(self, 0, -1),
+            Event::Key(Key::Down) => move_cursor(self, 0, 1),
+            Event::Key(Key::Left) => move_cursor(self, -1, 0),
+            Event::Key(Key::Right) => move_cursor(self, 1, 0),
+            _ => Ignored,
+        };
+
+        fn move_cursor(me: &mut BoardView, dx: isize, dy: isize) -> EventResult {
+            me.move_cursor(dx, dy);
+            Ignored
+        }
     }
 }
 
