@@ -1,8 +1,8 @@
 use cursive::event::*;
 use cursive::theme::*;
 use cursive::*;
-use std::ops::*;
 use std::fmt;
+use std::ops::*;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum Cell {
@@ -94,21 +94,22 @@ impl View for BoardView {
 
         for y in 0..board.height {
             for x in 0..board.width {
-                let loc = XY::new(x * 2 + 1, y * 2 + 1);
-                printer.print(Vec2::new(loc.x - 1, loc.y - 1), "+-+");
-                printer.print(Vec2::new(loc.x - 1, loc.y), "| |");
-                printer.print(Vec2::new(loc.x - 1, loc.y + 1), "+-+");
-
                 let cell = board[Vec2::new(x, y)];
-
-                if x == self.cursor.x && y == self.cursor.y {
-                    printer.with_color(ColorStyle::back(Color::Light(BaseColor::White)), |p| {
-                        p.print(loc, cell.to_str())
-                    });
-                } else {
-                    printer.print(loc, cell.to_str());
-                }
+                print_cell(printer, x, y, cell);
             }
+        }
+
+        let hilight: ColorStyle = ColorStyle::back(Color::Light(BaseColor::White));
+        printer.with_color(hilight, |p| {
+            print_cell(p, self.cursor.x, self.cursor.y, board[self.cursor]);
+        });
+
+        fn print_cell(printer: &Printer, x: usize, y: usize, cell: Cell) {
+            let loc = XY::new(x * 2 + 1, y * 2 + 1);
+            printer.print(Vec2::new(loc.x - 1, loc.y - 1), "+-+");
+            printer.print(Vec2::new(loc.x - 1, loc.y), "| |");
+            printer.print(Vec2::new(loc.x - 1, loc.y + 1), "+-+");
+            printer.print(loc, cell.to_str());
         }
     }
 
