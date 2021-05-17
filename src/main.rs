@@ -2,7 +2,7 @@ use cursive::event::*;
 use cursive::theme::*;
 use cursive::*;
 use std::ops::*;
-use std::string::*;
+use std::fmt;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum Cell {
@@ -21,9 +21,9 @@ impl Cell {
     }
 }
 
-impl ToString for Cell {
-    fn to_string(&self) -> String {
-        self.to_str().to_owned()
+impl fmt::Display for Cell {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.to_str())
     }
 }
 
@@ -103,10 +103,10 @@ impl View for BoardView {
 
                 if x == self.cursor.x && y == self.cursor.y {
                     printer.with_color(ColorStyle::back(Color::Light(BaseColor::White)), |p| {
-                        p.print(loc, &cell.to_string())
+                        p.print(loc, cell.to_str())
                     });
                 } else {
-                    printer.print(loc, &cell.to_string());
+                    printer.print(loc, cell.to_str());
                 }
             }
         }
