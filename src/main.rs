@@ -3,8 +3,10 @@ use cursive::theme::*;
 use cursive::*;
 
 mod board;
+mod cell;
 
 use crate::board::*;
+use crate::cell::*;
 
 struct BoardView {
     board: Board,
