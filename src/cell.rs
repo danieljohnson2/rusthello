@@ -1,5 +1,6 @@
 use std::fmt;
 
+/// Lists the states a cell on the board can be in.
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum Cell {
     Empty,
@@ -8,6 +9,7 @@ pub enum Cell {
 }
 
 impl Cell {
+    /// Returns the text to display for a cell
     pub fn to_str(self) -> &'static str {
         match self {
             Cell::Empty => " ",
@@ -16,6 +18,8 @@ impl Cell {
         }
     }
 
+    /// Returns the reversed cell; white for black and
+    /// black for white. Empty cells are returned unchanged.
     pub fn to_opposite(self) -> Cell {
         match self {
             Cell::Empty => Cell::Empty,

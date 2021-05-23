@@ -1,6 +1,8 @@
 use crate::cell::*;
 use std::ops::*;
 
+/// Holds the state of play; the board is essentially a two dimensional
+/// array of cells.
 pub struct Board {
     width: usize,
     height: usize,
@@ -8,6 +10,8 @@ pub struct Board {
 }
 
 impl Board {
+    /// Creates a new board with the usual pattern of initial
+    /// cells- mostly empty.
     pub fn new(width: usize, height: usize) -> Board {
         use Cell::*;
 
@@ -28,14 +32,20 @@ impl Board {
         board
     }
 
+    /// The width of the board.
     pub fn get_width(&self) -> usize {
         self.width
     }
 
+    /// The height of the board.
     pub fn get_height(&self) -> usize {
         self.height
     }
 
+    /// Plays a move; it places a cell at the location indicated, and
+    /// flips any other cells that ought to be. If the location given is not
+    /// empty, or if this would flip nothing, then this does not play the
+    /// move and returns false.
     pub fn place(&mut self, loc: Loc, cell: Cell) -> bool {
         if self[loc] == Cell::Empty {
             let flips = self.find_flippable_around(loc, cell);
@@ -53,6 +63,7 @@ impl Board {
         false
     }
 
+    /// Returns all valid locations where a given cell can be placed.
     pub fn find_valid_moves(&self, cell: Cell) -> Vec<Loc> {
         let mut valid = Vec::new();
 
@@ -69,10 +80,15 @@ impl Board {
         valid
     }
 
+    /// True if the location and cell can be played, but does not
+    /// play the move.
     pub fn is_valid_move(&self, loc: Loc, cell: Cell) -> bool {
         !self.find_flippable_around(loc, cell).is_empty()
     }
 
+    /// Returns a vector with all locations on the board that would be flipped
+    /// by placing 'cell' and 'start'. If the location indicated is not empty
+    // this returns an empty vector.
     fn find_flippable_around(&self, start: Loc, cell: Cell) -> Vec<Loc> {
         let mut buffer: Vec<Loc> = Vec::new();
 
@@ -92,6 +108,10 @@ impl Board {
         buffer
     }
 
+    /// This finds all cells containing opposed cells to 'cell' starting after
+    /// 'start' (not including 'start'!) and running until a location matching
+    /// 'cell' is found. If no location matching 'cell' is found, this returns an
+    /// empty vector.
     fn find_flippable(&self, start: Loc, cell: Cell, dx: isize, dy: isize) -> Vec<Loc> {
         let mut buffer: Vec<Loc> = Vec::new();
         let mut here = start;
@@ -110,6 +130,8 @@ impl Board {
         }
     }
 
+    /// This adds a delta to a location, and returns the new location so long as
+    /// it is in the board; if not it returns None.
     pub fn offset_within(&self, loc: Loc, dx: isize, dy: isize) -> Option<Loc> {
         if let Some(x) = add(loc.x, dx) {
             if let Some(y) = add(loc.y, dy) {
