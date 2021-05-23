@@ -19,6 +19,14 @@ impl Cell {
             Cell::Black => "X",
         }
     }
+
+    fn to_opposite(self) -> Cell {
+        match self {
+            Cell::Empty => Cell::Empty,
+            Cell::White => Cell::Black,
+            Cell::Black => Cell::White,
+        }
+    }
 }
 
 impl fmt::Display for Cell {
@@ -52,6 +60,60 @@ impl Board {
         board[Vec2::new(center.x - 1, center.y)] = White;
 
         board
+    }
+
+    fn place(&mut self, loc: Vec2, cell: Cell) -> bool {
+        if self[loc] == Cell::Empty {
+            let flips = self.find_flippable_around(loc, cell);
+
+            if !flips.is_empty() {
+                self[loc] = cell;
+
+                for f in flips {
+                    self[f] = cell
+                }
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn find_flippable_around(&self, start: Vec2, cell: Cell) -> Vec<Vec2> {
+        let mut buffer: Vec<Vec2> = Vec::new();
+
+        buffer.append(&mut self.find_flippable(start, cell, XY::new(-1, -1)));
+        buffer.append(&mut self.find_flippable(start, cell, XY::new(-1, 0)));
+        buffer.append(&mut self.find_flippable(start, cell, XY::new(-1, 1)));
+
+        buffer.append(&mut self.find_flippable(start, cell, XY::new(0, -1)));
+        buffer.append(&mut self.find_flippable(start, cell, XY::new(0, 1)));
+
+        buffer.append(&mut self.find_flippable(start, cell, XY::new(1, -1)));
+        buffer.append(&mut self.find_flippable(start, cell, XY::new(1, 0)));
+        buffer.append(&mut self.find_flippable(start, cell, XY::new(1, 1)));
+
+        buffer
+    }
+
+    fn find_flippable(&self, start: Vec2, cell: Cell, delta: XY<isize>) -> Vec<Vec2> {
+        let mut buffer: Vec<Vec2> = Vec::new();
+        let mut here = start;
+
+        loop {
+            if let Some(next) = here.checked_add(delta) {
+                here = next;
+                if self[here] == cell {
+                    return buffer;
+                } else if self[here] == cell.to_opposite() {
+                    buffer.push(here)
+                } else {
+                    break Vec::new();
+                }
+            } else {
+                break Vec::new();
+            }
+        }
     }
 }
 
@@ -125,11 +187,17 @@ impl View for BoardView {
             Event::Key(Key::Down) => move_cursor(self, 0, 1),
             Event::Key(Key::Left) => move_cursor(self, -1, 0),
             Event::Key(Key::Right) => move_cursor(self, 1, 0),
+            Event::Char(' ') => make_move(self),
             _ => Ignored,
         };
 
         fn move_cursor(me: &mut BoardView, dx: isize, dy: isize) -> EventResult {
             me.move_cursor(dx, dy);
+            Ignored
+        }
+
+        fn make_move(me: &mut BoardView) -> EventResult {
+            me.board.place(me.cursor, Cell::White);
             Ignored
         }
     }
