@@ -1,4 +1,5 @@
 use crate::cell::*;
+use std::cmp::*;
 use std::ops::*;
 
 /// Holds the state of play; the board is essentially a two dimensional
@@ -133,26 +134,7 @@ impl Board {
     /// This adds a delta to a location, and returns the new location so long as
     /// it is in the board; if not it returns None.
     pub fn offset_within(&self, loc: Loc, dx: isize, dy: isize) -> Option<Loc> {
-        if let Some(x) = add(loc.x, dx) {
-            if let Some(y) = add(loc.y, dy) {
-                if x < self.width && y < self.height {
-                    return Some(Loc::new(x, y));
-                }
-            }
-        }
-
-        return None;
-
-        #[allow(clippy::comparison_chain)]
-        fn add(left: usize, right: isize) -> Option<usize> {
-            if right > 0 {
-                left.checked_add(right as usize)
-            } else if right < 0 {
-                left.checked_sub((-right) as usize)
-            } else {
-                Some(left)
-            }
-        }
+        loc.offset_within(dx, dy, self.width, self.height)
     }
 }
 
@@ -172,6 +154,7 @@ impl IndexMut<Loc> for Board {
     }
 }
 
+// Repreents a position on the board.
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Loc {
     pub x: usize,
@@ -179,7 +162,31 @@ pub struct Loc {
 }
 
 impl Loc {
+    /// Creates a new Loc with the given co-ordinates.
     pub fn new(x: usize, y: usize) -> Loc {
         Loc { x, y }
+    }
+
+    /// This adds a delta to a location, and returns the new location so long as
+    /// it is in the indicated rage; if not it returns None. It can have an x
+    /// co-ordinate from 0 to width-1, and y can go from 0 to height-1.
+    pub fn offset_within(self, dx: isize, dy: isize, width: usize, height: usize) -> Option<Loc> {
+        if let Some(x) = add(self.x, dx) {
+            if let Some(y) = add(self.y, dy) {
+                if x < width && y < height {
+                    return Some(Loc::new(x, y));
+                }
+            }
+        }
+
+        return None;
+
+        fn add(left: usize, right: isize) -> Option<usize> {
+            match right.cmp(&0) {
+                Ordering::Greater => left.checked_add(right as usize),
+                Ordering::Less => left.checked_sub((-right) as usize),
+                Ordering::Equal => Some(left),
+            }
+        }
     }
 }
