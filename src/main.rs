@@ -86,13 +86,17 @@ impl Board {
             for x in 0..self.width {
                 let here = Vec2::new(x, y);
 
-                if !self.find_flippable_around(here, cell).is_empty() {
+                if self.is_valid_move(here, cell) {
                     valid.push(here)
                 }
             }
         }
 
         valid
+    }
+
+    fn is_valid_move(&self, loc: Vec2, cell: Cell) -> bool {
+        !self.find_flippable_around(loc, cell).is_empty()
     }
 
     fn find_flippable_around(&self, start: Vec2, cell: Cell) -> Vec<Vec2> {
@@ -186,7 +190,12 @@ impl View for BoardView {
             }
         }
 
-        let hilight: ColorStyle = ColorStyle::back(Color::Light(BaseColor::White));
+        let hilight: ColorStyle = if self.board.is_valid_move(self.cursor, Cell::White) {
+            ColorStyle::back(Color::Light(BaseColor::White))
+        } else {
+            ColorStyle::back(Color::Light(BaseColor::Red))
+        };
+        
         printer.with_color(hilight, |p| {
             print_cell(p, self.cursor.x, self.cursor.y, board[self.cursor]);
         });
