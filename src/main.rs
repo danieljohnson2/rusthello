@@ -10,18 +10,22 @@ use crate::cell::*;
 
 struct BoardView {
     board: Board,
-    cursor: Vec2,
+    cursor: Loc,
 }
 
 impl BoardView {
     fn new(board: Board) -> BoardView {
-        let cursor = Vec2::new(board.get_width() / 2, board.get_height() / 2);
+        let cursor = Loc::new(board.get_width() / 2, board.get_height() / 2);
         BoardView { board, cursor }
     }
 
-    fn move_cursor(&mut self, dx: isize, dy: isize) {
-        self.cursor.x = (self.cursor.x as isize + dx) as usize;
-        self.cursor.y = (self.cursor.y as isize + dy) as usize;
+    fn move_cursor(&mut self, dx: isize, dy: isize) -> bool {
+        if let Some(l) = self.board.offset_within(self.cursor, dx, dy) {
+            self.cursor = l;
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -31,7 +35,7 @@ impl View for BoardView {
 
         for y in 0..board.get_height() {
             for x in 0..board.get_width() {
-                let cell = board[Vec2::new(x, y)];
+                let cell = board[Loc::new(x, y)];
                 print_cell(printer, x, y, cell);
             }
         }
