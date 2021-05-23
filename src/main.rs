@@ -79,6 +79,24 @@ impl Board {
         false
     }
 
+    fn find_valid_moves(&self, cell: Cell) -> Vec<Vec2> {
+        let mut valid = Vec::new();
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let here = Vec2::new(x, y);
+
+                if self[here] == Cell::Empty {
+                    if !self.find_flippable_around(here, cell).is_empty() {
+                        valid.push(here)
+                    }
+                }
+            }
+        }
+
+        valid
+    }
+
     fn find_flippable_around(&self, start: Vec2, cell: Cell) -> Vec<Vec2> {
         let mut buffer: Vec<Vec2> = Vec::new();
 
@@ -102,16 +120,20 @@ impl Board {
 
         loop {
             if let Some(next) = here.checked_add(delta) {
-                here = next;
-                if self[here] == cell {
-                    return buffer;
-                } else if self[here] == cell.to_opposite() {
-                    buffer.push(here)
+                if next.x < self.width && next.y < self.height {
+                    here = next;
+                    if self[here] == cell {
+                        return buffer;
+                    } else if self[here] == cell.to_opposite() {
+                        buffer.push(here)
+                    } else {
+                        break Vec::new();
+                    }
                 } else {
-                    break Vec::new();
+                    return Vec::new();
                 }
             } else {
-                break Vec::new();
+                return Vec::new();
             }
         }
     }
@@ -197,7 +219,12 @@ impl View for BoardView {
         }
 
         fn make_move(me: &mut BoardView) -> EventResult {
-            me.board.place(me.cursor, Cell::White);
+            if me.board.place(me.cursor, Cell::White) {
+                let valid = me.board.find_valid_moves(Cell::Black);
+                if !valid.is_empty() {
+                    me.board.place(valid[0], Cell::Black);
+                };
+            }
             Ignored
         }
     }
