@@ -86,10 +86,8 @@ impl Board {
             for x in 0..self.width {
                 let here = Vec2::new(x, y);
 
-                if self[here] == Cell::Empty {
-                    if !self.find_flippable_around(here, cell).is_empty() {
-                        valid.push(here)
-                    }
+                if !self.find_flippable_around(here, cell).is_empty() {
+                    valid.push(here)
                 }
             }
         }
@@ -100,16 +98,18 @@ impl Board {
     fn find_flippable_around(&self, start: Vec2, cell: Cell) -> Vec<Vec2> {
         let mut buffer: Vec<Vec2> = Vec::new();
 
-        buffer.append(&mut self.find_flippable(start, cell, XY::new(-1, -1)));
-        buffer.append(&mut self.find_flippable(start, cell, XY::new(-1, 0)));
-        buffer.append(&mut self.find_flippable(start, cell, XY::new(-1, 1)));
+        if self[start] == Cell::Empty {
+            buffer.append(&mut self.find_flippable(start, cell, XY::new(-1, -1)));
+            buffer.append(&mut self.find_flippable(start, cell, XY::new(-1, 0)));
+            buffer.append(&mut self.find_flippable(start, cell, XY::new(-1, 1)));
 
-        buffer.append(&mut self.find_flippable(start, cell, XY::new(0, -1)));
-        buffer.append(&mut self.find_flippable(start, cell, XY::new(0, 1)));
+            buffer.append(&mut self.find_flippable(start, cell, XY::new(0, -1)));
+            buffer.append(&mut self.find_flippable(start, cell, XY::new(0, 1)));
 
-        buffer.append(&mut self.find_flippable(start, cell, XY::new(1, -1)));
-        buffer.append(&mut self.find_flippable(start, cell, XY::new(1, 0)));
-        buffer.append(&mut self.find_flippable(start, cell, XY::new(1, 1)));
+            buffer.append(&mut self.find_flippable(start, cell, XY::new(1, -1)));
+            buffer.append(&mut self.find_flippable(start, cell, XY::new(1, 0)));
+            buffer.append(&mut self.find_flippable(start, cell, XY::new(1, 1)));
+        }
 
         buffer
     }
@@ -119,23 +119,26 @@ impl Board {
         let mut here = start;
 
         loop {
-            if let Some(next) = here.checked_add(delta) {
-                if next.x < self.width && next.y < self.height {
-                    here = next;
-                    if self[here] == cell {
-                        return buffer;
-                    } else if self[here] == cell.to_opposite() {
-                        buffer.push(here)
-                    } else {
-                        break Vec::new();
-                    }
-                } else {
-                    return Vec::new();
+            if let Some(next) = self.offset_within(here, delta) {
+                here = next;
+                if self[here] == cell {
+                    return buffer;
+                } else if self[here] == cell.to_opposite() {
+                    buffer.push(here);
+                    continue;
                 }
-            } else {
-                return Vec::new();
+            }
+            return Vec::new();
+        }
+    }
+
+    fn offset_within(&self, vec: Vec2, delta: XY<isize>) -> Option<Vec2> {
+        if let Some(next) = vec.checked_add(delta) {
+            if next.x < self.width && next.y < self.height {
+                return Some(next);
             }
         }
+        None
     }
 }
 
