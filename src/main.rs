@@ -1,5 +1,7 @@
+use cursive::direction::*;
 use cursive::event::*;
 use cursive::theme::*;
+use cursive::views::*;
 use cursive::*;
 
 mod board;
@@ -30,7 +32,7 @@ impl BoardView {
 }
 
 impl View for BoardView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&'_ self, printer: &Printer) {
         let board = &self.board;
 
         for y in 0..board.get_height() {
@@ -84,20 +86,70 @@ impl View for BoardView {
         }
 
         fn make_move(me: &mut BoardView) -> EventResult {
-            if me.board.place(me.cursor, Cell::White) {
-                let valid = me.board.find_valid_moves(Cell::Black);
+            let b = &mut me.board;
+
+            if b.place(me.cursor, Cell::White) {
+                let valid = b.find_valid_moves(Cell::Black);
                 if !valid.is_empty() {
-                    me.board.place(valid[0], Cell::Black);
+                    b.place(valid[0], Cell::Black);
                 };
             }
-            Ignored
+
+            let black_score = b.count_cells(Cell::Black);
+            let white_score = b.count_cells(Cell::White);
+
+            EventResult::with_cb(move |siv| {
+                siv.call_on_name("scoreboard", |v: &mut ScoreboardView| {
+                    v.set_score(black_score, white_score)
+                });
+            })
         }
+    }
+}
+
+struct ScoreboardView {
+    black_score: usize,
+    white_score: usize,
+}
+
+impl ScoreboardView {
+    pub fn new(board: &Board) -> ScoreboardView {
+        let black_score = board.count_cells(Cell::Black);
+        let white_score = board.count_cells(Cell::White);
+        ScoreboardView {
+            black_score,
+            white_score,
+        }
+    }
+
+    pub fn set_score(&mut self, black_score: usize, white_score: usize) {
+        self.black_score = black_score;
+        self.white_score = white_score;
+    }
+}
+
+impl View for ScoreboardView {
+    fn draw(&self, printer: &Printer) {
+        let line1 = format!("X: {}", self.black_score);
+        printer.print(Vec2::new(0, 0), &line1);
+        let line2 = format!("O: {}", self.white_score);
+        printer.print(Vec2::new(0, 1), &line2);
+    }
+
+    fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
+        Vec2::new(20, 2)
     }
 }
 
 fn main() {
     let mut siv = Cursive::default();
+    let board = Board::new(8, 8);
+    let scoreboard = ScoreboardView::new(&board);
 
-    siv.add_fullscreen_layer(BoardView::new(Board::new(8, 8)));
+    siv.add_fullscreen_layer(
+        LinearLayout::new(Orientation::Horizontal)
+            .child(BoardView::new(board))
+            .child(NamedView::new("scoreboard", scoreboard)),
+    );
     siv.run();
 }

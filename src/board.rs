@@ -136,6 +136,21 @@ impl Board {
     pub fn offset_within(&self, loc: Loc, dx: isize, dy: isize) -> Option<Loc> {
         loc.offset_within(dx, dy, self.width, self.height)
     }
+
+    /// This counts the number of board cells whose value is 'cell'.
+    pub fn count_cells(&self, cell: Cell) -> usize {
+        let mut count = 0;
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let here = Loc::new(x, y);
+                if self[here] == cell {
+                    count += 1;
+                }
+            }
+        }
+
+        count
+    }
 }
 
 impl Index<Loc> for Board {
