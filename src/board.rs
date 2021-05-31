@@ -1,3 +1,8 @@
+use std::cell::Ref;
+use std::cell::RefCell;
+use std::cell::RefMut;
+use std::rc::*;
+
 use crate::cell::*;
 use std::cmp::*;
 use std::ops::*;
@@ -8,6 +13,28 @@ pub struct Board {
     width: usize,
     height: usize,
     cells: Vec<Cell>,
+}
+
+#[derive(Clone)]
+pub struct BoardRef {
+    board: Rc<RefCell<Board>>,
+}
+
+impl BoardRef {
+    pub fn new(width: usize, height: usize) -> BoardRef {
+        let b = Board::new(width, height);
+        BoardRef {
+            board: Rc::new(RefCell::new(b)),
+        }
+    }
+
+    pub fn borrow(&self) -> Ref<Board> {
+        self.board.borrow()
+    }
+
+    pub fn borrow_mut(&self) -> RefMut<Board> {
+        self.board.borrow_mut()
+    }
 }
 
 impl Board {
