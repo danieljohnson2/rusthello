@@ -1,7 +1,5 @@
-use std::cell::Ref;
 use std::cell::RefCell;
-use std::cell::RefMut;
-use std::rc::*;
+use std::rc::Rc;
 
 use crate::cell::*;
 use std::cmp::*;
@@ -15,27 +13,7 @@ pub struct Board {
     cells: Vec<Cell>,
 }
 
-#[derive(Clone)]
-pub struct BoardRef {
-    board: Rc<RefCell<Board>>,
-}
-
-impl BoardRef {
-    pub fn new(width: usize, height: usize) -> BoardRef {
-        let b = Board::new(width, height);
-        BoardRef {
-            board: Rc::new(RefCell::new(b)),
-        }
-    }
-
-    pub fn borrow(&self) -> Ref<Board> {
-        self.board.borrow()
-    }
-
-    pub fn borrow_mut(&self) -> RefMut<Board> {
-        self.board.borrow_mut()
-    }
-}
+pub type BoardRef = Rc<RefCell<Board>>;
 
 impl Board {
     /// Creates a new board with the usual pattern of initial
@@ -58,6 +36,10 @@ impl Board {
         board[Loc::new(center.x - 1, center.y)] = White;
 
         board
+    }
+
+    pub fn to_ref(self) -> BoardRef {
+        BoardRef::new(RefCell::new(self))
     }
 
     /// The width of the board.
