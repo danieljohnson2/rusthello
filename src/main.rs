@@ -140,11 +140,15 @@ impl View for ScoreboardView {
 fn main() {
     let mut siv = Cursive::default();
     let board = Board::new(8, 8).to_ref();
-    let scoreboard = ScoreboardView::new(board.clone());
+    let boardview = BoardView::new(board.clone());
+    let scoreboard = ResizedView::with_fixed_size(
+        (10, 6),
+        ShadowView::new(Panel::new(ScoreboardView::new(board))),
+    );
 
     siv.add_fullscreen_layer(
-        LinearLayout::new(Orientation::Horizontal)
-            .child(BoardView::new(board))
+        LinearLayout::horizontal()
+            .child(boardview)
             .child(scoreboard),
     );
     siv.run();
