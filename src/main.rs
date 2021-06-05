@@ -1,4 +1,3 @@
-use cursive::direction::*;
 use cursive::event::*;
 use cursive::theme::*;
 use cursive::views::*;
@@ -54,13 +53,18 @@ impl BoardView {
 impl View for BoardView {
     fn draw(&'_ self, printer: &Printer) {
         let board = self.board.borrow();
+        let height = board.get_height();
+        let width = board.get_width();
 
-        for y in 0..board.get_height() {
-            for x in 0..board.get_width() {
-                let cell = board[Loc::new(x, y)];
-                print_cell(printer, x, y, cell);
+        for y in 0..height {
+            for x in 0..width {
+                let loc = Loc::new(x, y);
+                let cell = board[loc];
+                print_cell(printer, loc, cell);
             }
         }
+
+        printer.print_box((0, 0), (width * 2 + 1, height * 2 + 1), false);
 
         let hilight: ColorStyle = if board.is_valid_move(self.cursor, Cell::White) {
             ColorStyle::back(Color::Light(BaseColor::White))
@@ -69,15 +73,16 @@ impl View for BoardView {
         };
 
         printer.with_color(hilight, |p| {
-            print_cell(p, self.cursor.x, self.cursor.y, board[self.cursor]);
+            print_cell(p, self.cursor, board[self.cursor]);
         });
 
-        fn print_cell(printer: &Printer, x: usize, y: usize, cell: Cell) {
-            let loc = XY::new(x * 2 + 1, y * 2 + 1);
-            printer.print(Vec2::new(loc.x - 1, loc.y - 1), "+-+");
-            printer.print(Vec2::new(loc.x - 1, loc.y), "| |");
-            printer.print(Vec2::new(loc.x - 1, loc.y + 1), "+-+");
-            printer.print(loc, cell.to_str());
+        fn print_cell(printer: &Printer, loc: Loc, cell: Cell) {
+            let xy = XY::new(loc.x * 2 + 1, loc.y * 2 + 1);
+
+            printer.print((xy.x - 1, xy.y - 1), "┼─┼");
+            printer.print((xy.x - 1, xy.y), "│ │");
+            printer.print((xy.x - 1, xy.y + 1), "┼─┼");
+            printer.print(xy, cell.to_str());
         }
     }
 
@@ -139,7 +144,7 @@ impl View for ScoreboardView {
 
 fn main() {
     let mut siv = Cursive::default();
-    let board = Board::new(8, 8).to_ref();
+    let board = Board::new(8, 8).into_ref();
     let boardview = BoardView::new(board.clone());
     let scoreboard = ResizedView::with_fixed_size(
         (10, 6),

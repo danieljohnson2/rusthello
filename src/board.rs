@@ -38,7 +38,7 @@ impl Board {
         board
     }
 
-    pub fn to_ref(self) -> BoardRef {
+    pub fn into_ref(self) -> BoardRef {
         BoardRef::new(RefCell::new(self))
     }
 
