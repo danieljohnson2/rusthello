@@ -27,32 +27,43 @@ impl BoardView {
 
     fn get_bg_char(&self, xy: Vec2) -> &'static str {
         let board = self.board.borrow();
+        let mut left = xy.y % 2 == 0;
+        let mut up = xy.x % 2 == 0;
+        let mut right = xy.y % 2 == 0;
+        let mut down = xy.x % 2 == 0;
 
         if xy.x == 0 {
-            if xy.y == 0 {
-                "┌"
-            } else if xy.y == board.get_height() * 2 {
-                "└"
-            } else {
-                "│"
-            }
-        } else if xy.x == board.get_width() * 2 {
-            if xy.y == 0 {
-                "┐"
-            } else if xy.y == board.get_height() * 2 {
-                "┘"
-            } else {
-                "│"
-            }
-        } else if xy.y == 0 || xy.y == board.get_height() * 2 {
-            "─"
-        } else if xy.x % 2 == 0 && xy.y % 2 == 0 {
-            "┼"
-        } else if xy.y % 2 == 0 {
-            "─"
-        } else {
-            "│"
+            left = false
         }
+        if xy.y == 0 {
+            up = false
+        }
+        if xy.x == board.get_width() * 2 {
+            right = false
+        }
+        if xy.y == board.get_height() * 2 {
+            down = false
+        }
+
+        const box_chars: [&'static str; 16] = [
+            " ", "╴", "╷", "┘", "╶", "─", "└", "┴", "╵", "┐", "│", "┤", "┌", "┬", "├", "┼",
+        ];
+
+        let mut idx = 0;
+        if left {
+            idx |= 1
+        }
+        if up {
+            idx |= 2
+        }
+        if right {
+            idx |= 4
+        }
+        if down {
+            idx |= 8
+        }
+
+        box_chars[idx]
     }
 
     fn place(&mut self, cell: Cell) -> bool {
