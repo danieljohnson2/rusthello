@@ -25,6 +25,36 @@ impl BoardView {
         }
     }
 
+    fn get_bg_char(&self, xy: Vec2) -> &'static str {
+        let board = self.board.borrow();
+
+        if xy.x == 0 {
+            if xy.y == 0 {
+                "┌"
+            } else if xy.y == board.get_height() * 2 {
+                "└"
+            } else {
+                "│"
+            }
+        } else if xy.x == board.get_width() * 2 {
+            if xy.y == 0 {
+                "┐"
+            } else if xy.y == board.get_height() * 2 {
+                "┘"
+            } else {
+                "│"
+            }
+        } else if xy.y == 0 || xy.y == board.get_height() * 2 {
+            "─"
+        } else if xy.x % 2 == 0 && xy.y % 2 == 0 {
+            "┼"
+        } else if xy.y % 2 == 0 {
+            "─"
+        } else {
+            "│"
+        }
+    }
+
     fn place(&mut self, cell: Cell) -> bool {
         let mut board = self.board.borrow_mut();
         if board.place(self.cursor, cell) {
@@ -48,6 +78,34 @@ impl BoardView {
             false
         }
     }
+
+    fn print_cell(&self, printer: &Printer, loc: Loc, cell: Cell) {
+        let mut xy = XY::new(loc.x * 2, loc.y * 2);
+
+        printer.print(xy, self.get_bg_char(xy));
+        xy.x += 1;
+        printer.print(xy, self.get_bg_char(xy));
+        xy.x += 1;
+        printer.print(xy, self.get_bg_char(xy));
+
+        xy.x -= 2;
+        xy.y += 1;
+
+        printer.print(xy, self.get_bg_char(xy));
+        xy.x += 1;
+        printer.print(xy, cell.to_str());
+        xy.x += 1;
+        printer.print(xy, self.get_bg_char(xy));
+
+        xy.x -= 2;
+        xy.y += 1;
+
+        printer.print(xy, self.get_bg_char(xy));
+        xy.x += 1;
+        printer.print(xy, self.get_bg_char(xy));
+        xy.x += 1;
+        printer.print(xy, self.get_bg_char(xy));
+    }
 }
 
 impl View for BoardView {
@@ -60,11 +118,9 @@ impl View for BoardView {
             for x in 0..width {
                 let loc = Loc::new(x, y);
                 let cell = board[loc];
-                print_cell(printer, loc, cell);
+                self.print_cell(printer, loc, cell);
             }
         }
-
-        printer.print_box((0, 0), (width * 2 + 1, height * 2 + 1), false);
 
         let hilight: ColorStyle = if board.is_valid_move(self.cursor, Cell::White) {
             ColorStyle::back(Color::Light(BaseColor::White))
@@ -73,17 +129,8 @@ impl View for BoardView {
         };
 
         printer.with_color(hilight, |p| {
-            print_cell(p, self.cursor, board[self.cursor]);
+            self.print_cell(p, self.cursor, board[self.cursor]);
         });
-
-        fn print_cell(printer: &Printer, loc: Loc, cell: Cell) {
-            let xy = XY::new(loc.x * 2 + 1, loc.y * 2 + 1);
-
-            printer.print((xy.x - 1, xy.y - 1), "┼─┼");
-            printer.print((xy.x - 1, xy.y), "│ │");
-            printer.print((xy.x - 1, xy.y + 1), "┼─┼");
-            printer.print(xy, cell.to_str());
-        }
     }
 
     fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
