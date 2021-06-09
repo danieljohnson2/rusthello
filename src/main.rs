@@ -27,43 +27,32 @@ impl BoardView {
 
     fn get_bg_char(&self, xy: Vec2) -> &'static str {
         let board = self.board.borrow();
-        let mut left = xy.y % 2 == 0;
-        let mut up = xy.x % 2 == 0;
-        let mut right = xy.y % 2 == 0;
-        let mut down = xy.x % 2 == 0;
+        const LEFT: usize = 0b0001;
+        const UP: usize = 0b0010;
+        const RIGHT: usize = 0b0100;
+        const DOWN: usize = 0b1000;
 
-        if xy.x == 0 {
-            left = false
-        }
-        if xy.y == 0 {
-            up = false
-        }
-        if xy.x == board.get_width() * 2 {
-            right = false
-        }
-        if xy.y == board.get_height() * 2 {
-            down = false
-        }
+        let mut idx = 0;
+        idx |= (LEFT | RIGHT) * (!xy.y & 1);
+        idx |= (UP | DOWN) * (!xy.x & 1);
+        idx = clear_if(idx, LEFT, xy.x == 0);
+        idx = clear_if(idx, UP, xy.y == 0);
+        idx = clear_if(idx, RIGHT, xy.x == board.get_width() * 2);
+        idx = clear_if(idx, DOWN, xy.y == board.get_height() * 2);
 
-        const box_chars: [&'static str; 16] = [
+        const BOX_CHARS: [&str; 16] = [
             " ", "╴", "╷", "┘", "╶", "─", "└", "┴", "╵", "┐", "│", "┤", "┌", "┬", "├", "┼",
         ];
 
-        let mut idx = 0;
-        if left {
-            idx |= 1
-        }
-        if up {
-            idx |= 2
-        }
-        if right {
-            idx |= 4
-        }
-        if down {
-            idx |= 8
-        }
+        return BOX_CHARS[idx];
 
-        box_chars[idx]
+        fn clear_if(bits: usize, mask: usize, flag: bool) -> usize {
+            if flag {
+                bits & !mask
+            } else {
+                bits
+            }
+        }
     }
 
     fn place(&mut self, cell: Cell) -> bool {
