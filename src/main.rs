@@ -80,31 +80,17 @@ impl BoardView {
     }
 
     fn print_cell(&self, printer: &Printer, loc: Loc, cell: Cell) {
-        let mut xy = XY::new(loc.x * 2, loc.y * 2);
+        for dy in 0..3 {
+            for dx in 0..3 {
+                let xy = XY::new(loc.x * 2 + dx, loc.y * 2 + dy);
 
-        printer.print(xy, self.get_bg_char(xy));
-        xy.x += 1;
-        printer.print(xy, self.get_bg_char(xy));
-        xy.x += 1;
-        printer.print(xy, self.get_bg_char(xy));
-
-        xy.x -= 2;
-        xy.y += 1;
-
-        printer.print(xy, self.get_bg_char(xy));
-        xy.x += 1;
-        printer.print(xy, cell.to_str());
-        xy.x += 1;
-        printer.print(xy, self.get_bg_char(xy));
-
-        xy.x -= 2;
-        xy.y += 1;
-
-        printer.print(xy, self.get_bg_char(xy));
-        xy.x += 1;
-        printer.print(xy, self.get_bg_char(xy));
-        xy.x += 1;
-        printer.print(xy, self.get_bg_char(xy));
+                if dx == 1 && dy == 1 {
+                    printer.print(xy, cell.to_str());
+                } else {
+                    printer.print(xy, self.get_bg_char(xy));
+                }
+            }
+        }
     }
 }
 
