@@ -78,20 +78,6 @@ impl BoardView {
             false
         }
     }
-
-    fn print_cell(&self, printer: &Printer, loc: Loc, cell: Cell) {
-        for dy in 0..3 {
-            for dx in 0..3 {
-                let xy = XY::new(loc.x * 2 + dx, loc.y * 2 + dy);
-
-                if dx == 1 && dy == 1 {
-                    printer.print(xy, cell.to_str());
-                } else {
-                    printer.print(xy, self.get_bg_char(xy));
-                }
-            }
-        }
-    }
 }
 
 impl View for BoardView {
@@ -99,24 +85,38 @@ impl View for BoardView {
         let board = self.board.borrow();
         let height = board.get_height();
         let width = board.get_width();
+        let cursor = self.cursor;
+
+        for y in 0..=height * 2 {
+            for x in 0..=width * 2 {
+                let xy = Vec2::new(x, y);
+                printer.print(xy, self.get_bg_char(xy));
+            }
+        }
+
+        printer.print_box((cursor.x * 2, cursor.y * 2), (3, 3), false);
 
         for y in 0..height {
             for x in 0..width {
                 let loc = Loc::new(x, y);
                 let cell = board[loc];
-                self.print_cell(printer, loc, cell);
+                let xy = XY::new(x * 2 + 1, y * 2 + 1);
+
+                if loc == cursor {
+                    let hilight: ColorStyle = if board.is_valid_move(self.cursor, Cell::White) {
+                        ColorStyle::back(Color::Light(BaseColor::White))
+                    } else {
+                        ColorStyle::back(Color::Light(BaseColor::Red))
+                    };
+
+                    printer.with_color(hilight, |p| {
+                        p.print(xy, cell.to_str());
+                    });
+                } else {
+                    printer.print(xy, cell.to_str());
+                }
             }
         }
-
-        let hilight: ColorStyle = if board.is_valid_move(self.cursor, Cell::White) {
-            ColorStyle::back(Color::Light(BaseColor::White))
-        } else {
-            ColorStyle::back(Color::Light(BaseColor::Red))
-        };
-
-        printer.with_color(hilight, |p| {
-            self.print_cell(p, self.cursor, board[self.cursor]);
-        });
     }
 
     fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
