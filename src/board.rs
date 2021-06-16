@@ -73,6 +73,11 @@ impl Board {
         false
     }
 
+    pub fn is_game_over(&self) -> bool {
+        self.find_valid_moves(Cell::White).is_empty()
+            && self.find_valid_moves(Cell::Black).is_empty()
+    }
+
     /// Returns all valid locations where a given cell can be placed.
     pub fn find_valid_moves(&self, cell: Cell) -> Vec<Loc> {
         let mut valid = Vec::new();

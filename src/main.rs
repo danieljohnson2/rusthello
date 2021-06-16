@@ -2,6 +2,7 @@ use cursive::event::*;
 use cursive::theme::*;
 use cursive::views::*;
 use cursive::*;
+use std::cmp::*;
 
 mod board;
 mod cell;
@@ -55,14 +56,21 @@ impl BoardView {
         }
     }
 
-    fn place(&mut self, cell: Cell) -> bool {
-        let mut board = self.board.borrow_mut();
-        if board.place(self.cursor, cell) {
-            let valid = board.find_valid_moves(Cell::Black);
-            if !valid.is_empty() {
-                board.place(valid[0], Cell::Black);
-            };
+    fn has_any_moves(&mut self, cell: Cell) -> bool {
+        let board = self.board.borrow();
+        !board.find_valid_moves(cell).is_empty()
+    }
 
+    fn place_at_cursor(&mut self, cell: Cell) -> bool {
+        let mut board = self.board.borrow_mut();
+        board.place(self.cursor, cell)
+    }
+
+    fn place_ai(&mut self, cell: Cell) -> bool {
+        let mut board = self.board.borrow_mut();
+        let valid = board.find_valid_moves(cell);
+        if !valid.is_empty() {
+            board.place(valid[0], cell);
             true
         } else {
             false
@@ -142,7 +150,15 @@ impl View for BoardView {
         }
 
         fn make_move(me: &mut BoardView) -> EventResult {
-            me.place(Cell::White);
+            if me.place_at_cursor(Cell::White) {
+                loop {
+                    let black_moved = me.place_ai(Cell::Black);
+
+                    if me.has_any_moves(Cell::White) || !black_moved {
+                        break;
+                    }
+                }
+            };
             Ignored
         }
     }
@@ -161,6 +177,7 @@ impl ScoreboardView {
 impl View for ScoreboardView {
     fn draw(&self, printer: &Printer) {
         let board = self.board.borrow();
+        let game_over = board.is_game_over();
         let black_score = board.count_cells(Cell::Black);
         let white_score = board.count_cells(Cell::White);
 
@@ -168,10 +185,20 @@ impl View for ScoreboardView {
         printer.print(Vec2::new(0, 0), &line1);
         let line2 = format!("O: {}", white_score);
         printer.print(Vec2::new(0, 1), &line2);
+
+        if game_over {
+            printer.print(Vec2::new(0, 2), "GAME OVER ");
+
+            match black_score.cmp(&white_score) {
+                Ordering::Greater => printer.print(Vec2::new(10, 2), "X WINS"),
+                Ordering::Less => printer.print(Vec2::new(10, 2), "O WINS"),
+                Ordering::Equal => printer.print(Vec2::new(10, 2), "DRAW"),
+            }
+        }
     }
 
     fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
-        Vec2::new(20, 2)
+        Vec2::new(20, 3)
     }
 }
 
@@ -180,7 +207,7 @@ fn main() {
     let board = Board::new(8, 8).into_ref();
     let boardview = BoardView::new(board.clone());
     let scoreboard = ResizedView::with_fixed_size(
-        (10, 6),
+        (20, 7),
         ShadowView::new(Panel::new(ScoreboardView::new(board))),
     );
 
