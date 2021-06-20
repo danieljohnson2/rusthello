@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::collections::*;
 use std::rc::Rc;
 
 use crate::cell::*;
@@ -11,6 +12,7 @@ pub struct Board {
     width: usize,
     height: usize,
     cells: Vec<Cell>,
+    cell_counts: HashMap<Cell, usize>,
 }
 
 pub type BoardRef = Rc<RefCell<Board>>;
@@ -27,13 +29,16 @@ impl Board {
             width,
             height,
             cells,
+            cell_counts: HashMap::new(),
         };
 
         let center = Loc::new(width / 2, height / 2);
-        board[Loc::new(center.x, center.y)] = Black;
-        board[Loc::new(center.x - 1, center.y - 1)] = Black;
-        board[Loc::new(center.x, center.y - 1)] = White;
-        board[Loc::new(center.x - 1, center.y)] = White;
+        *board.cell_at_mut(Loc::new(center.x, center.y)) = Black;
+        *board.cell_at_mut(Loc::new(center.x - 1, center.y - 1)) = Black;
+        *board.cell_at_mut(Loc::new(center.x, center.y - 1)) = White;
+        *board.cell_at_mut(Loc::new(center.x - 1, center.y)) = White;
+
+        board.update_board_info();
 
         board
     }
@@ -61,11 +66,13 @@ impl Board {
             let flips = self.find_flippable_around(loc, cell);
 
             if !flips.is_empty() {
-                self[loc] = cell;
+                *self.cell_at_mut(loc) = cell;
 
                 for f in flips {
-                    self[f] = cell
+                    *self.cell_at_mut(f) = cell
                 }
+
+                self.update_board_info();
                 return true;
             }
         }
@@ -153,17 +160,25 @@ impl Board {
 
     /// This counts the number of board cells whose value is 'cell'.
     pub fn count_cells(&self, cell: Cell) -> usize {
-        let mut count = 0;
+        *self.cell_counts.get(&cell).unwrap_or(&0)
+    }
+
+    fn cell_at_mut(&mut self, index: Loc) -> &mut Cell {
+        let idx = index.y * self.height + index.x;
+        &mut self.cells[idx]
+    }
+
+    fn update_board_info(&mut self) {
+        self.cell_counts.clear();
+
         for y in 0..self.height {
             for x in 0..self.width {
                 let here = Loc::new(x, y);
-                if self[here] == cell {
-                    count += 1;
-                }
+                let cell = self[here];
+                let e = self.cell_counts.entry(cell).or_insert(0);
+                *e += 1;
             }
         }
-
-        count
     }
 }
 
@@ -173,13 +188,6 @@ impl Index<Loc> for Board {
     fn index(&self, index: Loc) -> &Self::Output {
         let idx = index.y * self.height + index.x;
         &self.cells[idx]
-    }
-}
-
-impl IndexMut<Loc> for Board {
-    fn index_mut(&mut self, index: Loc) -> &mut Self::Output {
-        let idx = index.y * self.height + index.x;
-        &mut self.cells[idx]
     }
 }
 

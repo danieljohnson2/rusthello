@@ -1,7 +1,7 @@
 use std::fmt;
 
 /// Lists the states a cell on the board can be in.
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Cell {
     Empty,
     White,
