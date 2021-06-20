@@ -141,6 +141,7 @@ impl View for BoardView {
             Event::Key(Key::Left) => move_cursor(self, -1, 0),
             Event::Key(Key::Right) => move_cursor(self, 1, 0),
             Event::Char(' ') => make_move(self),
+            Event::Char('q') => EventResult::with_cb(|s| s.quit()),
             _ => Ignored,
         };
 
