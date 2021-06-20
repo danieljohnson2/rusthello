@@ -102,7 +102,9 @@ impl View for BoardView {
             }
         }
 
-        printer.print_box((cursor.x * 2, cursor.y * 2), (3, 3), false);
+        if !board.is_game_over() {
+            printer.print_box((cursor.x * 2, cursor.y * 2), (3, 3), false);
+        }
 
         for y in 0..height {
             for x in 0..width {
@@ -110,7 +112,7 @@ impl View for BoardView {
                 let cell = board[loc];
                 let xy = XY::new(x * 2 + 1, y * 2 + 1);
 
-                if loc == cursor {
+                if loc == cursor && !board.is_game_over() {
                     let hilight: ColorStyle = if board.is_valid_move(self.cursor, Cell::White) {
                         ColorStyle::back(Color::Light(BaseColor::White))
                     } else {

@@ -90,12 +90,14 @@ impl Board {
     pub fn find_valid_moves(&self, cell: Cell) -> Vec<Loc> {
         let mut valid = Vec::new();
 
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let here = Loc::new(x, y);
+        if !self.game_over {
+            for y in 0..self.height {
+                for x in 0..self.width {
+                    let here = Loc::new(x, y);
 
-                if self.is_valid_move(here, cell) {
-                    valid.push(here)
+                    if self.is_valid_move(here, cell) {
+                        valid.push(here)
+                    }
                 }
             }
         }
