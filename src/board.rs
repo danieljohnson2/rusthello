@@ -13,6 +13,7 @@ pub struct Board {
     height: usize,
     cells: Vec<Cell>,
     cell_counts: HashMap<Cell, usize>,
+    game_over: bool,
 }
 
 pub type BoardRef = Rc<RefCell<Board>>;
@@ -30,6 +31,7 @@ impl Board {
             height,
             cells,
             cell_counts: HashMap::new(),
+            game_over: false,
         };
 
         let center = Loc::new(width / 2, height / 2);
@@ -81,8 +83,7 @@ impl Board {
     }
 
     pub fn is_game_over(&self) -> bool {
-        self.find_valid_moves(Cell::White).is_empty()
-            && self.find_valid_moves(Cell::Black).is_empty()
+        self.game_over
     }
 
     /// Returns all valid locations where a given cell can be placed.
@@ -179,6 +180,9 @@ impl Board {
                 *e += 1;
             }
         }
+
+        self.game_over = self.find_valid_moves(Cell::White).is_empty()
+            && self.find_valid_moves(Cell::Black).is_empty();
     }
 }
 
