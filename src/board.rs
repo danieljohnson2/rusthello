@@ -7,7 +7,7 @@ use std::cmp::*;
 use std::ops::*;
 
 /// Holds the state of play; the board is essentially a two dimensional
-/// array of cells.
+/// array of cells, but also caches some values used for scoring.
 pub struct Board {
     width: usize,
     height: usize,
@@ -16,6 +16,8 @@ pub struct Board {
     game_over: bool,
 }
 
+/// A reference to a mutable board, allowing the board
+/// to be shared by multiple views.
 pub type BoardRef = Rc<RefCell<Board>>;
 
 impl Board {
@@ -45,6 +47,8 @@ impl Board {
         board
     }
 
+    /// Creates a BoardRef refering to this board,
+    /// which is copied into a RefCell.
     pub fn into_ref(self) -> BoardRef {
         BoardRef::new(RefCell::new(self))
     }
@@ -57,6 +61,28 @@ impl Board {
     /// The height of the board.
     pub fn get_height(&self) -> usize {
         self.height
+    }
+
+    /// This adds a delta to a location, and returns the new location so long as
+    /// it is in the board; if not it returns None.
+    pub fn offset_within(&self, loc: Loc, dx: isize, dy: isize) -> Option<Loc> {
+        loc.offset_within(dx, dy, self.width, self.height)
+    }
+
+    /// True if the game is over and no moves can be made.
+    pub fn is_game_over(&self) -> bool {
+        self.game_over
+    }
+
+    /// This counts the number of board cells whose value is 'cell'.
+    pub fn count_cells(&self, cell: Cell) -> usize {
+        *self.cell_counts.get(&cell).unwrap_or(&0)
+    }
+
+    /// True if the location and cell can be played, but does not
+    /// play the move.
+    pub fn is_valid_move(&self, loc: Loc, cell: Cell) -> bool {
+        !self.find_flippable_around(loc, cell).is_empty()
     }
 
     /// Plays a move; it places a cell at the location indicated, and
@@ -82,10 +108,6 @@ impl Board {
         false
     }
 
-    pub fn is_game_over(&self) -> bool {
-        self.game_over
-    }
-
     /// Returns all valid locations where a given cell can be placed.
     pub fn find_valid_moves(&self, cell: Cell) -> Vec<Loc> {
         let mut valid = Vec::new();
@@ -105,15 +127,9 @@ impl Board {
         valid
     }
 
-    /// True if the location and cell can be played, but does not
-    /// play the move.
-    pub fn is_valid_move(&self, loc: Loc, cell: Cell) -> bool {
-        !self.find_flippable_around(loc, cell).is_empty()
-    }
-
     /// Returns a vector with all locations on the board that would be flipped
     /// by placing 'cell' and 'start'. If the location indicated is not empty
-    // this returns an empty vector.
+    /// this returns an empty vector.
     fn find_flippable_around(&self, start: Loc, cell: Cell) -> Vec<Loc> {
         let mut buffer: Vec<Loc> = Vec::new();
 
@@ -155,22 +171,17 @@ impl Board {
         }
     }
 
-    /// This adds a delta to a location, and returns the new location so long as
-    /// it is in the board; if not it returns None.
-    pub fn offset_within(&self, loc: Loc, dx: isize, dy: isize) -> Option<Loc> {
-        loc.offset_within(dx, dy, self.width, self.height)
-    }
-
-    /// This counts the number of board cells whose value is 'cell'.
-    pub fn count_cells(&self, cell: Cell) -> usize {
-        *self.cell_counts.get(&cell).unwrap_or(&0)
-    }
-
+    /// Returns a mutable borrow of the slow indicated by the location;
+    /// if you modify it, call update_board_info() to update the statistics
+    /// we keep. You can mutate many cells before the update, though.
     fn cell_at_mut(&mut self, index: Loc) -> &mut Cell {
         let idx = index.y * self.height + index.x;
         &mut self.cells[idx]
     }
 
+    /// Updates the state of hte board to reflect the
+    /// cell array; this updates the counts of cells and
+    /// game over flag.
     fn update_board_info(&mut self) {
         self.cell_counts.clear();
 
