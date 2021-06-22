@@ -13,8 +13,8 @@ impl Cell {
     pub fn to_str(self) -> &'static str {
         match self {
             Cell::Empty => " ",
-            Cell::White => "O",
-            Cell::Black => "X",
+            Cell::White => "○",
+            Cell::Black => "●",
         }
     }
 

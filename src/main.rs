@@ -115,7 +115,7 @@ impl View for BoardView {
                 let xy = XY::new(x * 2 + 1, y * 2 + 1);
 
                 if loc == cursor && !board.is_game_over() {
-                    let hilight: ColorStyle = if board.is_valid_move(self.cursor, Cell::White) {
+                    let hilight = if board.is_valid_move(self.cursor, Cell::White) {
                         ColorStyle::back(Color::Light(BaseColor::White))
                     } else {
                         ColorStyle::back(Color::Light(BaseColor::Red))
@@ -188,17 +188,17 @@ impl View for ScoreboardView {
         let black_score = board.count_cells(Cell::Black);
         let white_score = board.count_cells(Cell::White);
 
-        let line1 = format!("X: {}", black_score);
+        let line1 = format!("●: {}", black_score);
         printer.print(Vec2::new(0, 0), &line1);
-        let line2 = format!("O: {}", white_score);
+        let line2 = format!("○: {}", white_score);
         printer.print(Vec2::new(0, 1), &line2);
 
         if game_over {
             printer.print(Vec2::new(0, 2), "GAME OVER ");
 
             match black_score.cmp(&white_score) {
-                Ordering::Greater => printer.print(Vec2::new(10, 2), "X WINS"),
-                Ordering::Less => printer.print(Vec2::new(10, 2), "O WINS"),
+                Ordering::Greater => printer.print(Vec2::new(10, 2), "● WINS"),
+                Ordering::Less => printer.print(Vec2::new(10, 2), "○ WINS"),
                 Ordering::Equal => printer.print(Vec2::new(10, 2), "DRAW"),
             }
         }
