@@ -10,6 +10,8 @@ mod cell;
 use crate::board::*;
 use crate::cell::*;
 
+/// A view to display the board's cells; it also
+/// tracks the cursor used by the player to make moves.
 struct BoardView {
     board: BoardRef,
     cursor: Loc,
@@ -167,6 +169,8 @@ impl View for BoardView {
     }
 }
 
+/// A view to display the score, and when the game is over
+/// it declares the winner.
 struct ScoreboardView {
     board: BoardRef,
 }

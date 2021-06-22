@@ -208,7 +208,7 @@ impl Index<Loc> for Board {
     }
 }
 
-// Repreents a position on the board.
+/// Repreents a position on the board.
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Loc {
     pub x: usize,
