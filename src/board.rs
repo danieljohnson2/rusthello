@@ -109,20 +109,28 @@ impl Board {
     }
 
     /// Returns all valid locations where a given cell can be placed.
-    pub fn find_valid_moves(&self, cell: Cell) -> Vec<Loc> {
+    /// They are ordered so the one with the most flips is first; the
+    /// AI chooses this move.
+    pub fn find_valid_moves(&self, cell: Cell) -> Vec<Move> {
         let mut valid = Vec::new();
 
         if !self.game_over {
             for y in 0..self.height {
                 for x in 0..self.width {
                     let here = Loc::new(x, y);
+                    let flippable = self.find_flippable_around(here, cell);
 
-                    if self.is_valid_move(here, cell) {
-                        valid.push(here)
+                    if !flippable.is_empty() {
+                        valid.push(Move {
+                            loc: here,
+                            flip_count: flippable.len(),
+                        });
                     }
                 }
             }
         }
+
+        valid.sort_by(|left, right| left.flip_count.cmp(&right.flip_count).reverse());
 
         valid
     }
@@ -243,4 +251,12 @@ impl Loc {
             }
         }
     }
+}
+
+/// Contains a location to move, and the count
+/// of other cells flipped- we use that as a score
+/// to decide the best move.
+pub struct Move {
+    pub loc: Loc,
+    pub flip_count: usize,
 }

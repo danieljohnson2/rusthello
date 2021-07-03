@@ -72,7 +72,7 @@ impl BoardView {
         let mut board = self.board.borrow_mut();
         let valid = board.find_valid_moves(cell);
         if !valid.is_empty() {
-            board.place(valid[0], cell);
+            board.place(valid[0].loc, cell);
             true
         } else {
             false
