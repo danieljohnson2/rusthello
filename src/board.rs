@@ -130,7 +130,7 @@ impl Board {
             }
         }
 
-        valid.sort_by(|left, right| left.flip_count.cmp(&right.flip_count).reverse());
+        valid.sort_by(|left, right| left.get_score(self).cmp(&right.get_score(self)).reverse());
 
         valid
     }
@@ -259,4 +259,21 @@ impl Loc {
 pub struct Move {
     pub loc: Loc,
     pub flip_count: usize,
+}
+
+impl Move {
+    fn get_score(&self, board: &Board) -> usize {
+        let mut score = self.flip_count + 100; // stay positive
+        let loc = self.loc;
+        let x_edge = loc.x == 0 || loc.x == board.get_width() - 1;
+        let y_edge = loc.y == 0 || loc.y == board.get_height() - 1;
+
+        if x_edge && y_edge {
+            score += 100 // prefer corners
+        } else if x_edge || y_edge {
+            score -= 100 // avoid edges
+        }
+
+        score
+    }
 }
