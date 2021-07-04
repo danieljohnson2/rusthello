@@ -70,6 +70,13 @@ impl Board {
         loc.offset_within(dx, dy, self.width, self.height)
     }
 
+    /// Returns an iterator over all the locations that are in the board.
+    pub fn locations(&self) -> impl Iterator<Item = Loc> + '_ {
+        let width = self.get_width();
+        let height = self.get_height();
+        (0..height).flat_map(move |y| (0..width).map(move |x| Loc::new(x, y)))
+    }
+
     /// True if the game is over and no moves can be made.
     pub fn is_game_over(&self) -> bool {
         self.game_over
@@ -113,24 +120,18 @@ impl Board {
     /// They are ordered so the one with the most flips is first; the
     /// AI chooses this move.
     pub fn find_valid_moves(&self, cell: Cell) -> Vec<Move> {
-        let mut valid = Vec::new();
-
         if !self.game_over {
-            for y in 0..self.height {
-                for x in 0..self.width {
-                    let loc = Loc::new(x, y);
-                    let flip_count = self.find_flippable_around(loc, cell).count();
+            let moves = self.locations().map(|loc| {
+                let flip_count = self.find_flippable_around(loc, cell).count();
+                Move { loc, flip_count }
+            });
 
-                    if flip_count > 0 {
-                        valid.push(Move { loc, flip_count });
-                    }
-                }
-            }
+            let mut valid: Vec<_> = moves.filter(|m| m.flip_count > 0).collect();
+            valid.sort_by(|left, right| left.get_score(self).cmp(&right.get_score(self)).reverse());
+            valid
+        } else {
+            Vec::new()
         }
-
-        valid.sort_by(|left, right| left.get_score(self).cmp(&right.get_score(self)).reverse());
-
-        valid
     }
 
     /// Returns a vector with all locations on the board that would be flipped
@@ -198,17 +199,15 @@ impl Board {
     /// cell array; this updates the counts of cells and
     /// game over flag.
     fn update_board_info(&mut self) {
-        self.cell_counts.clear();
+        let mut cell_counts = HashMap::new();
 
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let here = Loc::new(x, y);
-                let cell = self[here];
-                let e = self.cell_counts.entry(cell).or_insert(0);
-                *e += 1;
-            }
+        for here in self.locations() {
+            let cell = self[here];
+            let e = cell_counts.entry(cell).or_insert(0);
+            *e += 1;
         }
 
+        self.cell_counts = cell_counts;
         self.game_over = self.find_valid_moves(Cell::White).is_empty()
             && self.find_valid_moves(Cell::Black).is_empty();
     }

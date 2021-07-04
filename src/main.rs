@@ -108,25 +108,22 @@ impl View for BoardView {
             printer.print_box((cursor.x * 2, cursor.y * 2), (3, 3), false);
         }
 
-        for y in 0..height {
-            for x in 0..width {
-                let loc = Loc::new(x, y);
-                let cell = board[loc];
-                let xy = XY::new(x * 2 + 1, y * 2 + 1);
+        for loc in board.locations() {
+            let cell = board[loc];
+            let xy = XY::new(loc.x * 2 + 1, loc.y * 2 + 1);
 
-                if loc == cursor && !board.is_game_over() {
-                    let hilight = if board.is_valid_move(self.cursor, Cell::White) {
-                        ColorStyle::back(Color::Light(BaseColor::White))
-                    } else {
-                        ColorStyle::back(Color::Light(BaseColor::Red))
-                    };
-
-                    printer.with_color(hilight, |p| {
-                        p.print(xy, cell.to_str());
-                    });
+            if loc == cursor && !board.is_game_over() {
+                let hilight = if board.is_valid_move(self.cursor, Cell::White) {
+                    ColorStyle::back(Color::Light(BaseColor::White))
                 } else {
-                    printer.print(xy, cell.to_str());
-                }
+                    ColorStyle::back(Color::Light(BaseColor::Red))
+                };
+
+                printer.with_color(hilight, |p| {
+                    p.print(xy, cell.to_str());
+                });
+            } else {
+                printer.print(xy, cell.to_str());
             }
         }
     }
