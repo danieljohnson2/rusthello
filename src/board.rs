@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::*;
+use std::iter;
 use std::rc::Rc;
 
 use crate::cell::*;
@@ -142,16 +143,21 @@ impl Board {
         let mut buffer: Vec<Loc> = Vec::new();
 
         if self[start] == Cell::Empty {
-            buffer.append(&mut self.find_flippable(start, cell, -1, -1));
-            buffer.append(&mut self.find_flippable(start, cell, -1, 0));
-            buffer.append(&mut self.find_flippable(start, cell, -1, 1));
+            let offsets = [
+                (-1, -1),
+                (-1, 0),
+                (-1, 1),
+                (0, -1),
+                (0, 1),
+                (1, -1),
+                (1, 0),
+                (1, 1),
+            ];
 
-            buffer.append(&mut self.find_flippable(start, cell, 0, -1));
-            buffer.append(&mut self.find_flippable(start, cell, 0, 1));
-
-            buffer.append(&mut self.find_flippable(start, cell, 1, -1));
-            buffer.append(&mut self.find_flippable(start, cell, 1, 0));
-            buffer.append(&mut self.find_flippable(start, cell, 1, 1));
+            for (dx, dy) in offsets {
+                let candidates = self.cells_from(start, dx, dy);
+                buffer.append(&mut self.find_flippable(cell, candidates));
+            }
         }
 
         buffer
@@ -161,22 +167,35 @@ impl Board {
     /// 'start' (not including 'start'!) and running until a location matching
     /// 'cell' is found. If no location matching 'cell' is found, this returns an
     /// empty vector.
-    fn find_flippable(&self, start: Loc, cell: Cell, dx: isize, dy: isize) -> Vec<Loc> {
+    fn find_flippable(&self, cell: Cell, candidates: impl Iterator<Item = Loc>) -> Vec<Loc> {
         let mut buffer: Vec<Loc> = Vec::new();
-        let mut here = start;
 
-        loop {
+        for next in candidates {
+            if self[next] == cell {
+                return buffer;
+            } else if self[next] == cell.to_opposite() {
+                buffer.push(next);
+            } else {
+                break;
+            }
+        }
+
+        Vec::new()
+    }
+
+    // Returns an iterator the gives the locations starting from 'start'
+    // and incrementing by (dx, dy)- but 'start' itself is not included.
+    // The iterator ends when it runs off the board.
+    fn cells_from(&self, start: Loc, dx: isize, dy: isize) -> impl Iterator<Item = Loc> + '_ {
+        let mut here = start;
+        iter::from_fn(move || {
             if let Some(next) = self.offset_within(here, dx, dy) {
                 here = next;
-                if self[here] == cell {
-                    return buffer;
-                } else if self[here] == cell.to_opposite() {
-                    buffer.push(here);
-                    continue;
-                }
+                Some(next)
+            } else {
+                None
             }
-            return Vec::new();
-        }
+        })
     }
 
     /// Returns a mutable borrow of the slow indicated by the location;
