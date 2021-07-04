@@ -154,8 +154,8 @@ impl Board {
             &OFFSETS
         };
 
-        offsets.iter().flat_map(move |(dx, dy)| {
-            let candidates = self.cells_from(start, *dx, *dy);
+        offsets.iter().flat_map(move |&(dx, dy)| {
+            let candidates = self.cells_from(start, dx, dy).skip(1);
             self.find_flippable(cell, candidates)
         })
     }
@@ -167,11 +167,11 @@ impl Board {
     fn find_flippable(&self, cell: Cell, candidates: impl Iterator<Item = Loc>) -> Vec<Loc> {
         let mut buffer: Vec<Loc> = Vec::new();
 
-        for next in candidates {
-            if self[next] == cell {
+        for candidate in candidates {
+            if self[candidate] == cell {
                 return buffer;
-            } else if self[next] == cell.to_opposite() {
-                buffer.push(next);
+            } else if self[candidate] == cell.to_opposite() {
+                buffer.push(candidate);
             } else {
                 break;
             }
@@ -181,18 +181,9 @@ impl Board {
     }
 
     // Returns an iterator the gives the locations starting from 'start'
-    // and incrementing by (dx, dy)- but 'start' itself is not included.
-    // The iterator ends when it runs off the board.
+    // and incrementing by (dx, dy). The iterator ends when it runs off the board.
     fn cells_from(&self, start: Loc, dx: isize, dy: isize) -> impl Iterator<Item = Loc> + '_ {
-        let mut here = start;
-        iter::from_fn(move || {
-            if let Some(next) = self.offset_within(here, dx, dy) {
-                here = next;
-                Some(next)
-            } else {
-                None
-            }
-        })
+        iter::successors(Some(start), move |&l| self.offset_within(l, dx, dy))
     }
 
     /// Returns a mutable borrow of the slow indicated by the location;
