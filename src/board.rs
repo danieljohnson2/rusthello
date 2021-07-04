@@ -83,7 +83,7 @@ impl Board {
     /// True if the location and cell can be played, but does not
     /// play the move.
     pub fn is_valid_move(&self, loc: Loc, cell: Cell) -> bool {
-        !self.find_flippable_around(loc, cell).is_empty()
+        self.find_flippable_around(loc, cell).next().is_some()
     }
 
     /// Plays a move; it places a cell at the location indicated, and
@@ -92,7 +92,7 @@ impl Board {
     /// move and returns false.
     pub fn place(&mut self, loc: Loc, cell: Cell) -> bool {
         if self[loc] == Cell::Empty {
-            let flips = self.find_flippable_around(loc, cell);
+            let flips: Vec<_> = self.find_flippable_around(loc, cell).collect();
 
             if !flips.is_empty() {
                 *self.cell_at_mut(loc) = cell;
@@ -118,14 +118,11 @@ impl Board {
         if !self.game_over {
             for y in 0..self.height {
                 for x in 0..self.width {
-                    let here = Loc::new(x, y);
-                    let flippable = self.find_flippable_around(here, cell);
+                    let loc = Loc::new(x, y);
+                    let flip_count = self.find_flippable_around(loc, cell).count();
 
-                    if !flippable.is_empty() {
-                        valid.push(Move {
-                            loc: here,
-                            flip_count: flippable.len(),
-                        });
+                    if flip_count > 0 {
+                        valid.push(Move { loc, flip_count });
                     }
                 }
             }
@@ -139,28 +136,28 @@ impl Board {
     /// Returns a vector with all locations on the board that would be flipped
     /// by placing 'cell' and 'start'. If the location indicated is not empty
     /// this returns an empty vector.
-    fn find_flippable_around(&self, start: Loc, cell: Cell) -> Vec<Loc> {
-        let mut buffer: Vec<Loc> = Vec::new();
+    fn find_flippable_around(&self, start: Loc, cell: Cell) -> impl Iterator<Item = Loc> + '_ {
+        const OFFSETS: [(isize, isize); 8] = [
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, -1),
+            (0, 1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+        ];
 
-        if self[start] == Cell::Empty {
-            let offsets = [
-                (-1, -1),
-                (-1, 0),
-                (-1, 1),
-                (0, -1),
-                (0, 1),
-                (1, -1),
-                (1, 0),
-                (1, 1),
-            ];
+        let offsets: &[(isize, isize)] = if self[start] != Cell::Empty {
+            &[(0isize, 0isize); 0]
+        } else {
+            &OFFSETS
+        };
 
-            for (dx, dy) in offsets {
-                let candidates = self.cells_from(start, dx, dy);
-                buffer.append(&mut self.find_flippable(cell, candidates));
-            }
-        }
-
-        buffer
+        offsets.iter().flat_map(move |(dx, dy)| {
+            let candidates = self.cells_from(start, *dx, *dy);
+            self.find_flippable(cell, candidates)
+        })
     }
 
     /// This finds all cells containing opposed cells to 'cell' starting after
