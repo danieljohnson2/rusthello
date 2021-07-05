@@ -6,6 +6,7 @@ use std::cmp::*;
 
 mod board;
 mod cell;
+mod iterext;
 
 use crate::board::*;
 use crate::cell::*;

@@ -4,6 +4,7 @@ use std::iter;
 use std::rc::Rc;
 
 use crate::cell::*;
+use crate::iterext::*;
 use std::cmp::*;
 use std::ops::*;
 
@@ -166,19 +167,18 @@ impl Board {
     /// 'cell' is found. If no location matching 'cell' is found, this returns an
     /// empty vector.
     fn find_flippable(&self, cell: Cell, candidates: impl Iterator<Item = Loc>) -> Vec<Loc> {
-        let mut buffer: Vec<Loc> = Vec::new();
+        let mut buffer: Vec<Loc> = candidates
+            .take_while(|&c| self[c] != Cell::Empty)
+            .take_up_to(|&c| self[c] == cell)
+            .collect();
 
-        for candidate in candidates {
-            if self[candidate] == cell {
-                return buffer;
-            } else if self[candidate] == cell.to_opposite() {
-                buffer.push(candidate);
-            } else {
-                break;
-            }
+        if buffer.last().map(|&l| self[l]) == Some(cell) {
+            buffer.pop();
+        } else {
+            buffer.clear();
         }
 
-        Vec::new()
+        buffer
     }
 
     // Returns an iterator the gives the locations starting from 'start'

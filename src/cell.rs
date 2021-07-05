@@ -17,16 +17,6 @@ impl Cell {
             Cell::Black => "●",
         }
     }
-
-    /// Returns the reversed cell; white for black and
-    /// black for white. Empty cells are returned unchanged.
-    pub fn to_opposite(self) -> Cell {
-        match self {
-            Cell::Empty => Cell::Empty,
-            Cell::White => Cell::Black,
-            Cell::Black => Cell::White,
-        }
-    }
 }
 
 impl fmt::Display for Cell {
