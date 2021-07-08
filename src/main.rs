@@ -211,15 +211,20 @@ fn main() {
     let mut siv = Cursive::default();
     let board = Board::new(8, 8).into_ref();
     let boardview = BoardView::new(board.clone());
+
     let scoreboard = ResizedView::with_fixed_size(
         (20, 7),
-        ShadowView::new(Panel::new(ScoreboardView::new(board))),
+        ShadowView::new(Layer::with_color(
+            Panel::new(ScoreboardView::new(board)),
+            ColorStyle::back(Color::Dark(BaseColor::White)),
+        )),
     );
 
-    siv.add_fullscreen_layer(
+    siv.add_fullscreen_layer(Layer::with_color(
         LinearLayout::horizontal()
             .child(boardview)
             .child(scoreboard),
-    );
+        ColorStyle::back(Color::Dark(BaseColor::Blue)),
+    ));
     siv.run();
 }
