@@ -1,7 +1,9 @@
 use cursive::event::*;
 use cursive::theme::*;
+use cursive::view::*;
 use cursive::views::*;
 use cursive::*;
+use cursive_aligned_view::Alignable;
 use std::cmp::*;
 
 mod board;
@@ -212,18 +214,18 @@ fn main() {
     let board = Board::new(8, 8).into_ref();
     let boardview = BoardView::new(board.clone());
 
-    let scoreboard = ResizedView::with_fixed_size(
-        (20, 7),
-        ShadowView::new(Layer::with_color(
-            Panel::new(ScoreboardView::new(board)),
-            ColorStyle::back(Color::Dark(BaseColor::White)),
-        )),
-    );
+    let scoreboard = ShadowView::new(Layer::with_color(
+        Panel::new(ScoreboardView::new(board).fixed_size((18, 3))),
+        ColorStyle::back(Color::Dark(BaseColor::White)),
+    ))
+    .align_center();
 
     siv.add_fullscreen_layer(Layer::with_color(
-        LinearLayout::horizontal()
-            .child(boardview)
-            .child(scoreboard),
+        LinearLayout::vertical().child(
+            LinearLayout::horizontal()
+                .child(boardview)
+                .child(scoreboard),
+        ),
         ColorStyle::back(Color::Dark(BaseColor::Blue)),
     ));
     siv.run();
