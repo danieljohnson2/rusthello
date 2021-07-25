@@ -5,23 +5,7 @@ pub trait IterExt<T> {
     fn take_up_to<P>(self, pred: P) -> TakeUpTo<Self, P>
     where
         P: FnMut(&T) -> bool,
-        Self: Sized;
-}
-
-/// Holds the state needed for take_up_to.
-pub struct TakeUpTo<I, P> {
-    iterator: I,
-    pred: P,
-    done: bool,
-}
-
-impl<I, T> IterExt<T> for I
-where
-    I: Iterator<Item = T>,
-{
-    fn take_up_to<P>(self, pred: P) -> TakeUpTo<Self, P>
-    where
-        P: FnMut(&T) -> bool,
+        Self: Sized,
     {
         TakeUpTo {
             iterator: self,
@@ -29,6 +13,15 @@ where
             done: false,
         }
     }
+}
+
+impl<I: Iterator<Item = T>, T> IterExt<T> for I {}
+
+/// Holds the state needed for take_up_to.
+pub struct TakeUpTo<I, P> {
+    iterator: I,
+    pred: P,
+    done: bool,
 }
 
 impl<I, P> Iterator for TakeUpTo<I, P>
