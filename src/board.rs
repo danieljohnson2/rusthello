@@ -88,46 +88,16 @@ impl Board {
         *self.cell_counts.get(&cell).unwrap_or(&0)
     }
 
-    /// True if the location and cell can be played, but does not
-    /// play the move.
-    pub fn is_valid_move(&self, loc: Loc, cell: Cell) -> bool {
-        self.find_flippable_around(loc, cell).next().is_some()
-    }
-
-    /// Plays a move; it places a cell at the location indicated, and
-    /// flips any other cells that ought to be. If the location given is not
-    /// empty, or if this would flip nothing, then this does not play the
-    /// move and returns false.
-    pub fn place(&mut self, loc: Loc, cell: Cell) -> bool {
-        if self[loc] == Cell::Empty {
-            let flips: Vec<_> = self.find_flippable_around(loc, cell).collect();
-
-            if !flips.is_empty() {
-                *self.cell_at_mut(loc) = cell;
-
-                for f in flips {
-                    *self.cell_at_mut(f) = cell
-                }
-
-                self.update_board_info();
-                return true;
-            }
-        }
-
-        false
-    }
-
     /// Returns all valid locations where a given cell can be placed.
     /// They are ordered so the one with the most flips is first; the
     /// AI chooses this move.
     pub fn find_valid_moves(&self, cell: Cell) -> Vec<Move> {
         if !self.game_over {
             let moves = self.locations().map(|loc| {
-                let flip_count = self.find_flippable_around(loc, cell).count();
-                Move { loc, flip_count }
+                Move::new(self, loc, cell)
             });
 
-            let mut valid: Vec<_> = moves.filter(|m| m.flip_count > 0).collect();
+            let mut valid: Vec<_> = moves.filter(|m| m.is_valid()).collect();
             valid.sort_by(|left, right| left.get_score(self).cmp(&right.get_score(self)).reverse());
             valid
         } else {
@@ -264,10 +234,43 @@ impl Loc {
 /// to decide the best move.
 pub struct Move {
     pub loc: Loc,
+    pub cell: Cell,
     pub flip_count: usize,
 }
 
 impl Move {
+    pub fn new(board: &Board, loc: Loc, cell: Cell) -> Move {
+        let flip_count = board.find_flippable_around(loc, cell).count();
+        Move { loc, cell, flip_count }
+    }
+
+    pub fn is_valid(&self) -> bool {
+        self.flip_count > 0
+    }
+    
+    /// Plays a move; it places a cell at the location indicated, and
+    /// flips any other cells that ought to be. If the location given is not
+    /// empty, or if this would flip nothing, then this does not play the
+    /// move and returns false.
+    pub fn play(&self, board: &mut Board) -> bool {
+        if board[self.loc] == Cell::Empty {
+            let flips: Vec<_> = board.find_flippable_around(self.loc, self.cell).collect();
+
+            if !flips.is_empty() {
+                *board.cell_at_mut(self.loc) = self.cell;
+
+                for f in flips {
+                    *board.cell_at_mut(f) = self.cell
+                }
+
+                board.update_board_info();
+                return true;
+            }
+        }
+
+        false
+    }
+
     fn get_score(&self, board: &Board) -> usize {
         let mut score = self.flip_count + 100; // stay positive
         let loc = self.loc;

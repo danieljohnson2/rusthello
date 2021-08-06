@@ -68,14 +68,21 @@ impl BoardView {
 
     fn place_at_cursor(&mut self, cell: Cell) -> bool {
         let mut board = self.board.borrow_mut();
-        board.place(self.cursor, cell)
+        let mv = Move::new(&board, self.cursor, cell);
+
+        if mv.is_valid() {
+            mv.play(&mut board);
+            true
+        } else {
+            false
+        }
     }
 
     fn place_ai(&mut self, cell: Cell) -> bool {
         let mut board = self.board.borrow_mut();
         let valid = board.find_valid_moves(cell);
         if !valid.is_empty() {
-            board.place(valid[0].loc, cell);
+            valid[0].play(&mut board);
             true
         } else {
             false
@@ -116,7 +123,8 @@ impl View for BoardView {
             let xy = XY::new(loc.x * 2 + 1, loc.y * 2 + 1);
 
             if loc == cursor && !board.is_game_over() {
-                let hilight = if board.is_valid_move(self.cursor, Cell::Black) {
+                let candidate_move = Move::new(&board, self.cursor, Cell::Black);
+                let hilight = if candidate_move.is_valid() {
                     ColorStyle::back(Color::Light(BaseColor::White))
                 } else {
                     ColorStyle::back(Color::Light(BaseColor::Red))
