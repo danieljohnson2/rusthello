@@ -116,7 +116,7 @@ impl View for BoardView {
             let xy = XY::new(loc.x * 2 + 1, loc.y * 2 + 1);
 
             if loc == cursor && !board.is_game_over() {
-                let hilight = if board.is_valid_move(self.cursor, Cell::White) {
+                let hilight = if board.is_valid_move(self.cursor, Cell::Black) {
                     ColorStyle::back(Color::Light(BaseColor::White))
                 } else {
                     ColorStyle::back(Color::Light(BaseColor::Red))
@@ -155,11 +155,11 @@ impl View for BoardView {
         }
 
         fn make_move(me: &mut BoardView) -> EventResult {
-            if me.place_at_cursor(Cell::White) {
+            if me.place_at_cursor(Cell::Black) {
                 loop {
-                    let black_moved = me.place_ai(Cell::Black);
+                    let white_moved = me.place_ai(Cell::White);
 
-                    if me.has_any_moves(Cell::White) || !black_moved {
+                    if me.has_any_moves(Cell::Black) || !white_moved {
                         break;
                     }
                 }

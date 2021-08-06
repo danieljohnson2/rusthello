@@ -39,10 +39,10 @@ impl Board {
         };
 
         let center = Loc::new(width / 2, height / 2);
-        *board.cell_at_mut(Loc::new(center.x, center.y)) = Black;
-        *board.cell_at_mut(Loc::new(center.x - 1, center.y - 1)) = Black;
-        *board.cell_at_mut(Loc::new(center.x, center.y - 1)) = White;
-        *board.cell_at_mut(Loc::new(center.x - 1, center.y)) = White;
+        *board.cell_at_mut(Loc::new(center.x, center.y)) = White;
+        *board.cell_at_mut(Loc::new(center.x - 1, center.y - 1)) = White;
+        *board.cell_at_mut(Loc::new(center.x, center.y - 1)) = Black;
+        *board.cell_at_mut(Loc::new(center.x - 1, center.y)) = Black;
 
         board.update_board_info();
 
