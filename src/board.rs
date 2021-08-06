@@ -187,7 +187,7 @@ impl Board {
         iter::successors(Some(start), move |&l| self.offset_within(l, dx, dy))
     }
 
-    /// Returns a mutable borrow of the slow indicated by the location;
+    /// Returns a mutable borrow of the slot indicated by the location;
     /// if you modify it, call update_board_info() to update the statistics
     /// we keep. You can mutate many cells before the update, though.
     fn cell_at_mut(&mut self, index: Loc) -> &mut Cell {
@@ -222,7 +222,7 @@ impl Index<Loc> for Board {
     }
 }
 
-/// Repreents a position on the board.
+/// Represents a position on the board.
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Loc {
     pub x: usize,

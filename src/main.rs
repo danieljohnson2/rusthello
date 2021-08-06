@@ -196,11 +196,13 @@ impl View for ScoreboardView {
         if game_over {
             printer.print(Vec2::new(0, 2), "GAME OVER ");
 
-            match black_score.cmp(&white_score) {
-                Ordering::Greater => printer.print(Vec2::new(10, 2), "● WINS"),
-                Ordering::Less => printer.print(Vec2::new(10, 2), "○ WINS"),
-                Ordering::Equal => printer.print(Vec2::new(10, 2), "DRAW"),
-            }
+            let winner = match black_score.cmp(&white_score) {
+                Ordering::Greater => "● WINS",
+                Ordering::Less => "○ WINS",
+                Ordering::Equal => "DRAW",
+            };
+
+            printer.print(Vec2::new(10, 2), winner)
         }
     }
 
