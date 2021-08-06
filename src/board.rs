@@ -91,9 +91,9 @@ impl Board {
     /// Returns all valid locations where a given cell can be placed.
     /// They are ordered so the one with the most flips is first; the
     /// AI chooses this move.
-    pub fn find_valid_moves(&self, cell: Cell) -> Vec<Move> {
+    pub fn find_valid_moves(&self, cell: Cell) -> Vec<Movement> {
         if !self.game_over {
-            let moves = self.locations().map(|loc| Move::new(self, loc, cell));
+            let moves = self.locations().map(|loc| Movement::new(self, loc, cell));
 
             let mut valid: Vec<_> = moves.filter(|m| m.is_valid()).collect();
             valid.sort_by(|left, right| left.get_score(self).cmp(&right.get_score(self)).reverse());
@@ -231,29 +231,29 @@ impl Loc {
 /// and the cell to set them to. The move may be invalid,
 /// if it contains no flip locations.
 #[derive(Clone)]
-pub struct Move {
+pub struct Movement {
     cell: Cell,
     flips: Vec<Loc>,
 }
 
-impl Move {
-    /// Constructs a move for a location on the board; the move may be
+impl Movement {
+    /// Constructs a movement for a location on the board; the move may be
     /// invalid, if the location is not empty or would flip no other cells.
-    pub fn new(board: &Board, loc: Loc, cell: Cell) -> Move {
+    pub fn new(board: &Board, loc: Loc, cell: Cell) -> Movement {
         if board[loc] == Cell::Empty {
             let mut flips: Vec<Loc> = board.find_flippable_around(loc, cell).collect();
             if !flips.is_empty() {
                 flips.insert(0, loc)
             }
-            Move { cell, flips }
+            Movement { cell, flips }
         } else {
-            Move::invalid(cell)
+            Movement::invalid(cell)
         }
     }
 
     /// Constructs an invalid move with the cell indicated.
-    pub fn invalid(cell: Cell) -> Move {
-        Move {
+    pub fn invalid(cell: Cell) -> Movement {
+        Movement {
             cell,
             flips: Vec::new(),
         }
