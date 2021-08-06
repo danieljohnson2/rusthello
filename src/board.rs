@@ -93,9 +93,7 @@ impl Board {
     /// AI chooses this move.
     pub fn find_valid_moves(&self, cell: Cell) -> Vec<Move> {
         if !self.game_over {
-            let moves = self.locations().map(|loc| {
-                Move::new(self, loc, cell)
-            });
+            let moves = self.locations().map(|loc| Move::new(self, loc, cell));
 
             let mut valid: Vec<_> = moves.filter(|m| m.is_valid()).collect();
             valid.sort_by(|left, right| left.get_score(self).cmp(&right.get_score(self)).reverse());
@@ -229,60 +227,73 @@ impl Loc {
     }
 }
 
-/// Contains a location to move, and the count
-/// of other cells flipped- we use that as a score
-/// to decide the best move.
+/// Contains a move, which is a vec of locations to flip
+/// and the cell to set them to. The move may be invalid,
+/// if it contains no flip locations.
+#[derive(Clone)]
 pub struct Move {
-    pub loc: Loc,
-    pub cell: Cell,
-    pub flip_count: usize,
+    cell: Cell,
+    flips: Vec<Loc>,
 }
 
 impl Move {
+    /// Constructs a move for a location on the board; the move may be
+    /// invalid, if the location is not empty or would flip no other cells.
     pub fn new(board: &Board, loc: Loc, cell: Cell) -> Move {
-        let flip_count = board.find_flippable_around(loc, cell).count();
-        Move { loc, cell, flip_count }
-    }
-
-    pub fn is_valid(&self) -> bool {
-        self.flip_count > 0
-    }
-    
-    /// Plays a move; it places a cell at the location indicated, and
-    /// flips any other cells that ought to be. If the location given is not
-    /// empty, or if this would flip nothing, then this does not play the
-    /// move and returns false.
-    pub fn play(&self, board: &mut Board) -> bool {
-        if board[self.loc] == Cell::Empty {
-            let flips: Vec<_> = board.find_flippable_around(self.loc, self.cell).collect();
-
+        if board[loc] == Cell::Empty {
+            let mut flips: Vec<Loc> = board.find_flippable_around(loc, cell).collect();
             if !flips.is_empty() {
-                *board.cell_at_mut(self.loc) = self.cell;
-
-                for f in flips {
-                    *board.cell_at_mut(f) = self.cell
-                }
-
-                board.update_board_info();
-                return true;
+                flips.insert(0, loc)
             }
+            Move { cell, flips }
+        } else {
+            Move::invalid(cell)
         }
-
-        false
     }
 
-    fn get_score(&self, board: &Board) -> usize {
-        let mut score = self.flip_count + 100; // stay positive
-        let loc = self.loc;
-        let x_edge = loc.x == 0 || loc.x == board.get_width() - 1;
-        let y_edge = loc.y == 0 || loc.y == board.get_height() - 1;
-
-        if x_edge && y_edge {
-            score += 100 // prefer corners
-        } else if x_edge || y_edge {
-            score -= 100 // avoid edges
+    /// Constructs an invalid move with the cell indicated.
+    pub fn invalid(cell: Cell) -> Move {
+        Move {
+            cell,
+            flips: Vec::new(),
         }
+    }
 
-        score
+    /// True if this is a valid, move false if not.
+    pub fn is_valid(&self) -> bool {
+        self.flips.len() > 0
+    }
+
+    /// Plays a move; it flips the cells indicated by the move. If this move
+    /// is invalid, this method does nothing.
+    pub fn play(&self, board: &mut Board) {
+        if self.is_valid() {
+            for f in self.flips.iter() {
+                *board.cell_at_mut(*f) = self.cell
+            }
+
+            board.update_board_info();
+        }
+    }
+
+    /// Returns a score for this move; moves with higher scores
+    /// are preferred. This returns MIN for invalid moves.
+    fn get_score(&self, board: &Board) -> usize {
+        if self.is_valid() {
+            let mut score = self.flips.len() + 100; // stay positive
+            let loc = self.flips[0];
+            let x_edge = loc.x == 0 || loc.x == board.get_width() - 1;
+            let y_edge = loc.y == 0 || loc.y == board.get_height() - 1;
+
+            if x_edge && y_edge {
+                score += 100 // prefer corners
+            } else if x_edge || y_edge {
+                score -= 100 // avoid edges
+            }
+
+            score
+        } else {
+            usize::MIN
+        }
     }
 }
