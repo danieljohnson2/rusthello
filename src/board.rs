@@ -261,7 +261,7 @@ impl Movement {
 
     /// True if this is a valid, move false if not.
     pub fn is_valid(&self) -> bool {
-        self.flips.len() > 0
+        !self.flips.is_empty()
     }
 
     /// Plays a move; it flips the cells indicated by the move. If this move
