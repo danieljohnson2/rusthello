@@ -103,6 +103,27 @@ impl Board {
         }
     }
 
+    /// Applies a series of cell changes to the board and returns true if any
+    /// changes were made. If so, it also updates the board info.
+    pub fn apply_changes(&mut self, changes: impl Iterator<Item = CellChange>) -> bool {
+        let mut changed = false;
+
+        for f in changes {
+            let cell = self.cell_at_mut(f.loc);
+
+            if *cell != f.cell {
+                *cell = f.cell;
+                changed = true
+            }
+        }
+
+        if changed {
+            self.update_board_info();
+        }
+
+        changed
+    }
+
     /// Returns a vector with all locations on the board that would be flipped
     /// by placing 'cell' and 'start'. If the location indicated is not empty
     /// this returns an empty vector.
@@ -232,8 +253,13 @@ impl Loc {
 /// if it contains no flip locations.
 #[derive(Clone)]
 pub struct Movement {
-    cell: Cell,
-    flips: Vec<Loc>,
+    flips: Vec<CellChange>,
+}
+
+impl Default for Movement {
+    fn default() -> Movement {
+        Movement { flips: Vec::new() }
+    }
 }
 
 impl Movement {
@@ -241,21 +267,16 @@ impl Movement {
     /// invalid, if the location is not empty or would flip no other cells.
     pub fn new(board: &Board, loc: Loc, cell: Cell) -> Movement {
         if board[loc] == Cell::Empty {
-            let mut flips: Vec<Loc> = board.find_flippable_around(loc, cell).collect();
+            let mut flips: Vec<_> = board
+                .find_flippable_around(loc, cell)
+                .map(|loc| CellChange::new(cell, loc))
+                .collect();
             if !flips.is_empty() {
-                flips.insert(0, loc)
+                flips.insert(0, CellChange::new(cell, loc))
             }
-            Movement { cell, flips }
+            Movement { flips }
         } else {
-            Movement::invalid(cell)
-        }
-    }
-
-    /// Constructs an invalid move with the cell indicated.
-    pub fn invalid(cell: Cell) -> Movement {
-        Movement {
-            cell,
-            flips: Vec::new(),
+            Movement::default()
         }
     }
 
@@ -266,14 +287,8 @@ impl Movement {
 
     /// Plays a move; it flips the cells indicated by the move. If this move
     /// is invalid, this method does nothing.
-    pub fn play(&self, board: &mut Board) {
-        if self.is_valid() {
-            for f in self.flips.iter() {
-                *board.cell_at_mut(*f) = self.cell
-            }
-
-            board.update_board_info();
-        }
+    pub fn play(&self, board: &mut Board) -> bool {
+        board.apply_changes(self.flips.iter().copied())
     }
 
     /// Returns a score for this move; moves with higher scores
@@ -281,7 +296,7 @@ impl Movement {
     fn get_score(&self, board: &Board) -> usize {
         if self.is_valid() {
             let mut score = self.flips.len() + 100; // stay positive
-            let loc = self.flips[0];
+            let loc = self.flips[0].loc;
             let x_edge = loc.x == 0 || loc.x == board.get_width() - 1;
             let y_edge = loc.y == 0 || loc.y == board.get_height() - 1;
 
@@ -295,5 +310,17 @@ impl Movement {
         } else {
             usize::MIN
         }
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub struct CellChange {
+    pub cell: Cell,
+    pub loc: Loc,
+}
+
+impl CellChange {
+    pub fn new(cell: Cell, loc: Loc) -> CellChange {
+        CellChange { cell, loc }
     }
 }
