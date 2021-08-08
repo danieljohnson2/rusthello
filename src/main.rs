@@ -26,12 +26,13 @@ struct BoardView {
 
 impl BoardView {
     fn new(game: GameRef) -> BoardView {
-        let cursor = game.borrow().get_board_center();
+        let cursor = game.borrow().to_board().get_board_center();
         return BoardView { game, cursor };
     }
 
     fn get_bg_char(&self, xy: Vec2) -> &'static str {
         let game = self.game.borrow();
+        let board = game.to_board();
         const LEFT: usize = 0b0001;
         const UP: usize = 0b0010;
         const RIGHT: usize = 0b0100;
@@ -42,8 +43,8 @@ impl BoardView {
         idx |= (UP | DOWN) * (!xy.x & 1);
         idx = clear_if(idx, LEFT, xy.x == 0);
         idx = clear_if(idx, UP, xy.y == 0);
-        idx = clear_if(idx, RIGHT, xy.x == game.get_board_width() * 2);
-        idx = clear_if(idx, DOWN, xy.y == game.get_board_height() * 2);
+        idx = clear_if(idx, RIGHT, xy.x == board.get_width() * 2);
+        idx = clear_if(idx, DOWN, xy.y == board.get_height() * 2);
 
         const BOX_CHARS: [&str; 16] = [
             " ", "╴", "╷", "┘", "╶", "─", "└", "┴", "╵", "┐", "│", "┤", "┌", "┬", "├", "┼",
@@ -124,10 +125,8 @@ impl View for BoardView {
 
     fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
         let game = self.game.borrow();
-        Vec2::new(
-            game.get_board_width() * 2 + 1,
-            game.get_board_height() * 2 + 1,
-        )
+        let board = game.to_board();
+        Vec2::new(board.get_width() * 2 + 1, board.get_height() * 2 + 1)
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {

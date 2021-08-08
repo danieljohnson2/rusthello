@@ -39,18 +39,6 @@ impl Game {
         &self.board
     }
 
-    pub fn get_board_width(&self) -> usize {
-        self.board.get_width()
-    }
-
-    pub fn get_board_height(&self) -> usize {
-        self.board.get_height()
-    }
-
-    pub fn get_board_center(&self) -> Loc {
-        Loc::new(self.board.get_width() / 2, self.board.get_height() / 2)
-    }
-
     pub fn has_any_moves(&mut self, cell: Cell) -> bool {
         let board = &self.board;
         !board.find_valid_moves(cell).is_empty()
@@ -83,6 +71,23 @@ impl Game {
         }
     }
 
+    pub fn get_player_movement(&self, loc: Loc) -> Movement {
+        if self.next_move != Cell::Empty {
+            Movement::new(&self.board, loc, self.next_move)
+        } else {
+            Movement::default()
+        }
+    }
+
+    pub fn get_ai_movement(&self) -> Movement {
+        if self.next_move != Cell::Empty {
+            let valid = self.board.find_valid_moves(self.next_move);
+            valid.into_iter().next().unwrap_or(Movement::default())
+        } else {
+            Movement::default()
+        }
+    }
+
     pub fn begin_movement(&mut self, mv: Movement) -> bool {
         if self.ongoing_movement.is_valid() {
             false
@@ -100,23 +105,6 @@ impl Game {
             true
         } else {
             false
-        }
-    }
-
-    pub fn get_player_movement(&self, loc: Loc) -> Movement {
-        if self.next_move != Cell::Empty {
-            Movement::new(&self.board, loc, self.next_move)
-        } else {
-            Movement::default()
-        }
-    }
-
-    pub fn get_ai_movement(&self) -> Movement {
-        if self.next_move != Cell::Empty {
-            let valid = self.board.find_valid_moves(self.next_move);
-            valid.into_iter().next().unwrap_or(Movement::default())
-        } else {
-            Movement::default()
         }
     }
 }

@@ -53,6 +53,11 @@ impl Board {
         self.height
     }
 
+    // The center location in the board
+    pub fn get_board_center(&self) -> Loc {
+        Loc::new(self.width / 2, self.height / 2)
+    }
+
     /// This adds a delta to a location, and returns the new location so long as
     /// it is in the board; if not it returns None.
     pub fn offset_within(&self, loc: Loc, dx: isize, dy: isize) -> Option<Loc> {
