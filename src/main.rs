@@ -7,14 +7,14 @@ use cursive_aligned_view::Alignable;
 use std::cmp::*;
 
 mod board;
-mod game;
 mod cell;
+mod game;
 mod iterext;
 mod movement;
 
 use crate::board::*;
-use crate::game::*;
 use crate::cell::*;
+use crate::game::*;
 use crate::movement::*;
 
 /// A view to display the board's cells; it also
@@ -114,7 +114,10 @@ impl View for BoardView {
 
     fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
         let game = self.game.borrow();
-        Vec2::new(game.get_board_width() * 2 + 1, game.get_board_height() * 2 + 1)
+        Vec2::new(
+            game.get_board_width() * 2 + 1,
+            game.get_board_height() * 2 + 1,
+        )
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
@@ -137,11 +140,15 @@ impl View for BoardView {
 
         fn make_move(me: &mut BoardView) -> EventResult {
             let mut game = me.game.borrow_mut();
-            if game.place_at(me.cursor, Cell::Black) {
-                loop {
-                    let white_moved = game.place_ai(Cell::White);
+            let mv = game.get_player_movement(me.cursor);
 
-                    if game.has_any_moves(Cell::Black) || !white_moved {
+            if game.play_movement(mv) {
+                while game.check_move() == Cell::White {
+                    let wmv = game.get_ai_movement();
+
+                    if wmv.is_valid() {
+                        game.play_movement(wmv);
+                    } else {
                         break;
                     }
                 }

@@ -24,3 +24,13 @@ impl fmt::Display for Cell {
         f.write_str(self.to_str())
     }
 }
+
+impl Cell {
+    pub fn flipped(self) -> Cell {
+        match self {
+            Cell::Black => Cell::White,
+            Cell::White => Cell::Black,
+            Cell::Empty => Cell::Empty
+        }
+    }
+}

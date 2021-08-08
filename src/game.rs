@@ -7,6 +7,7 @@ use crate::movement::*;
 
 pub struct Game {
     board: Board,
+    next_move: Cell,
 }
 
 /// A reference to a mutable board, allowing the board
@@ -15,7 +16,10 @@ pub type GameRef = Rc<RefCell<Game>>;
 
 impl Game {
     pub fn new(board: Board) -> Game {
-        Game { board }
+        Game {
+            board,
+            next_move: Cell::Black,
+        }
     }
 
     /// Creates a GameRef refering to this game,
@@ -45,24 +49,38 @@ impl Game {
         !board.find_valid_moves(cell).is_empty()
     }
 
-    pub fn place_at(&mut self, loc: Loc, cell: Cell) -> bool {
-        let mv = Movement::new(&self.board, loc, cell);
+    pub fn check_move(&self) -> Cell {
+        self.next_move
+    }
 
-        if mv.is_valid() {
-            mv.play(&mut self.board);
+    pub fn play_movement(&mut self, mv: Movement) -> bool {
+        if mv.play(&mut self.board) {
+            let f = self.next_move.flipped();
+
+            if self.has_any_moves(f) {
+                self.next_move = f;
+            }
+
             true
         } else {
             false
         }
     }
 
-    pub fn place_ai(&mut self, cell: Cell) -> bool {
-        let valid = self.board.find_valid_moves(cell);
-        if !valid.is_empty() {
-            valid[0].play(&mut self.board);
-            true
+    pub fn get_player_movement(&self, loc: Loc) -> Movement {
+        if self.next_move != Cell::Empty {
+            Movement::new(&self.board, loc, self.next_move)
         } else {
-            false
+            Movement::default()
+        }
+    }
+
+    pub fn get_ai_movement(&self) -> Movement {
+        if self.next_move != Cell::Empty {
+            let valid = self.board.find_valid_moves(self.next_move);
+            valid.into_iter().next().unwrap_or(Movement::default())
+        } else {
+            Movement::default()
         }
     }
 }
