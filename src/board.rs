@@ -91,20 +91,17 @@ impl Board {
         }
     }
 
-    /// Applies a series of cell changes to the board and returns true if any
+    /// Applies a cell change to the board and returns true if any
     /// changes were made. If so, it also updates the board info.
-    pub fn apply_changes(&mut self, changes: impl Iterator<Item = CellChange>) -> bool {
+    pub fn apply_change(&mut self, change: CellChange) -> bool {
         let mut changed = false;
 
-        for f in changes {
-            let cell = self.cell_at_mut(f.loc);
+        let cell = self.cell_at_mut(change.loc);
 
-            if *cell != f.cell {
-                *cell = f.cell;
-                changed = true
-            }
+        if *cell != change.cell {
+            *cell = change.cell;
+            changed = true
         }
-
         if changed {
             self.update_board_info();
         }

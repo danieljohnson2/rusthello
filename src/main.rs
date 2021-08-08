@@ -116,7 +116,7 @@ impl View for BoardView {
         if let Ok(mut game) = self.game.try_borrow_mut() {
             if game.check_move() == Cell::White {
                 let mv = game.get_ai_movement();
-                game.play_movement(mv);
+                game.begin_movement(mv);
             }
         }
         self.render(printer);
@@ -152,7 +152,7 @@ impl View for BoardView {
             let mut game = me.game.borrow_mut();
             if game.check_move() == Cell::Black {
                 let mv = game.get_player_movement(me.cursor);
-                game.play_movement(mv);
+                game.begin_movement(mv);
             }
             Ignored
         }

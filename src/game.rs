@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::*;
 
 use crate::board::*;
 use crate::cell::*;
@@ -8,6 +9,8 @@ use crate::movement::*;
 pub struct Game {
     board: Board,
     next_move: Cell,
+    ongoing_movement: Movement,
+    start: Instant,
 }
 
 /// A reference to a mutable board, allowing the board
@@ -19,6 +22,8 @@ impl Game {
         Game {
             board,
             next_move: Cell::Black,
+            ongoing_movement: Movement::default(),
+            start: Instant::now(),
         }
     }
 
@@ -49,18 +54,33 @@ impl Game {
         !board.find_valid_moves(cell).is_empty()
     }
 
-    pub fn check_move(&self) -> Cell {
+    pub fn check_move(&mut self) -> Cell {
+        if self.ongoing_movement.is_valid() {
+            if self.start.elapsed() >= Duration::from_millis(100) {
+                self.start = Instant::now()
+            } else {
+                return Cell::Empty;
+            }
+
+            if self.ongoing_movement.play_one(&mut self.board) {
+                if !self.ongoing_movement.is_valid() {
+                    let f = self.next_move.flipped();
+
+                    if self.has_any_moves(f) {
+                        self.next_move = f;
+                    }
+                }
+            }
+        }
+
         self.next_move
     }
 
-    pub fn play_movement(&mut self, mv: Movement) -> bool {
-        if mv.play(&mut self.board) {
-            let f = self.next_move.flipped();
-
-            if self.has_any_moves(f) {
-                self.next_move = f;
-            }
-
+    pub fn begin_movement(&mut self, mv: Movement) -> bool {
+        if self.ongoing_movement.is_valid() {
+            false
+        } else if mv.is_valid() {
+            self.ongoing_movement = mv;
             true
         } else {
             false

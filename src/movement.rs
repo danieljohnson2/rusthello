@@ -40,8 +40,14 @@ impl Movement {
 
     /// Plays a move; it flips the cells indicated by the move. If this move
     /// is invalid, this method does nothing.
-    pub fn play(&self, board: &mut Board) -> bool {
-        board.apply_changes(self.flips.iter().copied())
+    pub fn play_one(&mut self, board: &mut Board) -> bool {
+        if self.flips.is_empty() {
+            false
+        } else {
+            board.apply_change(self.flips[0]);
+            self.flips.remove(0);
+            true
+        }
     }
 
     /// Returns a score for this move; moves with higher scores
