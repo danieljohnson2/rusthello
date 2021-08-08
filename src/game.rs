@@ -10,7 +10,7 @@ pub struct Game {
     board: Board,
     next_move: Cell,
     ongoing_movement: Movement,
-    start: Instant,
+    next_move_time: Instant,
 }
 
 /// A reference to a mutable board, allowing the board
@@ -19,11 +19,13 @@ pub type GameRef = Rc<RefCell<Game>>;
 
 impl Game {
     pub fn new(board: Board) -> Game {
+        let start = Instant::now();
+
         Game {
             board,
             next_move: Cell::Black,
             ongoing_movement: Movement::default(),
-            start: Instant::now(),
+            next_move_time: start,
         }
     }
 
@@ -56,13 +58,14 @@ impl Game {
 
     pub fn check_move(&mut self) -> Cell {
         if self.ongoing_movement.is_valid() {
-            if self.start.elapsed() >= Duration::from_millis(100) {
-                self.start = Instant::now()
-            } else {
-                return Cell::Empty;
-            }
+            let now = Instant::now();
+            while now >= self.next_move_time {
+                self.next_move_time += Duration::from_millis(100);
 
-            if self.ongoing_movement.play_one(&mut self.board) {
+                if !self.ongoing_movement.play_one(&mut self.board) {
+                    break;
+                }
+
                 if !self.ongoing_movement.is_valid() {
                     let f = self.next_move.flipped();
 
@@ -73,7 +76,11 @@ impl Game {
             }
         }
 
-        self.next_move
+        if self.ongoing_movement.is_valid() {
+            Cell::Empty // while a movement it ongoing, it is nobody's turn
+        } else {
+            self.next_move
+        }
     }
 
     pub fn begin_movement(&mut self, mv: Movement) -> bool {
@@ -81,6 +88,15 @@ impl Game {
             false
         } else if mv.is_valid() {
             self.ongoing_movement = mv;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn begin_immediate_movement(&mut self, mv: Movement) -> bool {
+        if self.begin_movement(mv) {
+            self.next_move_time = Instant::now();
             true
         } else {
             false

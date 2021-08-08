@@ -152,7 +152,7 @@ impl View for BoardView {
             let mut game = me.game.borrow_mut();
             if game.check_move() == Cell::Black {
                 let mv = game.get_player_movement(me.cursor);
-                game.begin_movement(mv);
+                game.begin_immediate_movement(mv);
             }
             Ignored
         }
