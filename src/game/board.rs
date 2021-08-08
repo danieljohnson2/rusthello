@@ -3,8 +3,7 @@ use std::collections::*;
 use std::iter;
 use std::ops::*;
 
-use crate::cell::*;
-use crate::movement::*;
+use super::*;
 
 /// Holds the state of play; the board is essentially a two dimensional
 /// array of cells, but also caches some values used for scoring.

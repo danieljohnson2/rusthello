@@ -2,9 +2,13 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::*;
 
-use crate::board::*;
-use crate::cell::*;
-use crate::movement::*;
+mod board;
+mod cell;
+mod movement;
+
+pub use board::*;
+pub use cell::*;
+pub use movement::*;
 
 pub struct Game {
     board: Board,

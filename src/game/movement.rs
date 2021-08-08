@@ -1,5 +1,4 @@
-use crate::board::*;
-use crate::cell::*;
+use super::*;
 use crate::iterext::*;
 
 /// Contains a move, which is a vec of cell changes to be

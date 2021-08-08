@@ -6,16 +6,10 @@ use cursive::*;
 use cursive_aligned_view::Alignable;
 use std::cmp::*;
 
-mod board;
-mod cell;
 mod game;
 mod iterext;
-mod movement;
 
-use crate::board::*;
-use crate::cell::*;
 use crate::game::*;
-use crate::movement::*;
 
 /// A view to display the board's cells; it also
 /// tracks the cursor used by the player to make moves.
