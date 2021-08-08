@@ -70,10 +70,8 @@ impl BoardView {
             false
         }
     }
-}
 
-impl View for BoardView {
-    fn draw(&'_ self, printer: &Printer) {
+    fn render(&self, printer: &Printer) {
         let game = self.game.borrow();
         let board = game.to_board();
         let height = board.get_height();
@@ -111,6 +109,18 @@ impl View for BoardView {
             }
         }
     }
+}
+
+impl View for BoardView {
+    fn draw(&self, printer: &Printer) {
+        if let Ok(mut game) = self.game.try_borrow_mut() {
+            if game.check_move() == Cell::White {
+                let mv = game.get_ai_movement();
+                game.play_movement(mv);
+            }
+        }
+        self.render(printer);
+    }
 
     fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
         let game = self.game.borrow();
@@ -140,19 +150,10 @@ impl View for BoardView {
 
         fn make_move(me: &mut BoardView) -> EventResult {
             let mut game = me.game.borrow_mut();
-            let mv = game.get_player_movement(me.cursor);
-
-            if game.play_movement(mv) {
-                while game.check_move() == Cell::White {
-                    let wmv = game.get_ai_movement();
-
-                    if wmv.is_valid() {
-                        game.play_movement(wmv);
-                    } else {
-                        break;
-                    }
-                }
-            };
+            if game.check_move() == Cell::Black {
+                let mv = game.get_player_movement(me.cursor);
+                game.play_movement(mv);
+            }
             Ignored
         }
     }
@@ -203,6 +204,8 @@ impl View for ScoreboardView {
 
 fn main() {
     let mut siv = Cursive::default();
+    siv.set_fps(60);
+
     let board = Board::new(8, 8);
     let game = Game::new(board).into_ref();
     let boardview = BoardView::new(game.clone());
