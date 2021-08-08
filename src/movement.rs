@@ -2,9 +2,9 @@ use crate::board::*;
 use crate::cell::*;
 use crate::iterext::*;
 
-/// Contains a move, which is a vec of locations to flip
-/// and the cell to set them to. The move may be invalid,
-/// if it contains no flip locations.
+/// Contains a move, which is a vec of cell changes to be
+//  made to execute the move. The move may be invalid,
+/// if it contains no changes to make.
 #[derive(Clone)]
 pub struct Movement {
     flips: Vec<CellChange>,
@@ -39,7 +39,10 @@ impl Movement {
     }
 
     /// Plays a move; it flips the cells indicated by the move. If this move
-    /// is invalid, this method does nothing.
+    /// is invalid, this method does nothing. It removes the flip that it
+    /// performs, so that the movement may become invalid.
+    /// 
+    /// This returns true if it flips something, false if was invalid.
     pub fn play_one(&mut self, board: &mut Board) -> bool {
         if self.flips.is_empty() {
             false
@@ -71,7 +74,7 @@ impl Movement {
         }
     }
 
-    /// Returns a vector with all locations on the board that would be flipped
+    /// Returns an iterator over all locations on the board that would be flipped
     /// by placing 'cell' and 'start'. If the location indicated is not empty
     /// this returns an empty vector.
     fn find_flippable_around(
@@ -102,7 +105,7 @@ impl Movement {
         })
     }
 
-    /// This finds all cells containing opposed cells to 'cell' starting after
+    /// Finds all cells containing opposed cells to 'cell' starting after
     /// 'start' (not including 'start'!) and running until a location matching
     /// 'cell' is found. If no location matching 'cell' is found, this returns an
     /// empty vector.
@@ -126,6 +129,8 @@ impl Movement {
     }
 }
 
+/// This contains a cell to write into a location
+/// and the location to put it.
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct CellChange {
     pub cell: Cell,
