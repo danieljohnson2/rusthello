@@ -41,7 +41,7 @@ impl Movement {
     /// Plays a move; it flips the cells indicated by the move. If this move
     /// is invalid, this method does nothing. It removes the flip that it
     /// performs, so that the movement may become invalid.
-    /// 
+    ///
     /// This returns true if it flips something, false if was invalid.
     pub fn play_one(&mut self, board: &mut Board) -> bool {
         if self.flips.is_empty() {

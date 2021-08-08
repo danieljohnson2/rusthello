@@ -45,7 +45,7 @@ impl Game {
     /// can change the game state. If there are any ongoing moves pending
     /// when it returns, it returns Empty- nobody can move until outstanding
     /// moves clear.
-    /// 
+    ///
     /// Outsanding moves run on a timer; this may do nothing (and return Empty)
     /// if there are outstanding moves that are not yet due.
     pub fn check_move(&mut self) -> Cell {
@@ -91,7 +91,7 @@ impl Game {
     pub fn get_ai_movement(&self) -> Movement {
         if self.next_move != Cell::Empty {
             let valid = self.board.find_valid_moves(self.next_move);
-            valid.into_iter().next().unwrap_or(Movement::default())
+            valid.into_iter().next().unwrap_or_default()
         } else {
             Movement::default()
         }
@@ -99,7 +99,7 @@ impl Game {
 
     /// This plays a move. The move will play out over time, and
     /// it will switch to a new player's turn only when complete.Duration
-    /// 
+    ///
     /// This returns false if the movement is invalid, or if another
     /// movement is ongoing. In this case no new movement is begun,
     pub fn begin_movement(&mut self, mv: Movement) -> bool {

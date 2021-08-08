@@ -27,7 +27,7 @@ struct BoardView {
 impl BoardView {
     fn new(game: GameRef) -> BoardView {
         let cursor = game.borrow().to_board().get_board_center();
-        return BoardView { game, cursor };
+        BoardView { game, cursor }
     }
 
     fn get_bg_char(&self, xy: Vec2) -> &'static str {

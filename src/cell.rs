@@ -30,7 +30,7 @@ impl Cell {
         match self {
             Cell::Black => Cell::White,
             Cell::White => Cell::Black,
-            Cell::Empty => Cell::Empty
+            Cell::Empty => Cell::Empty,
         }
     }
 }
