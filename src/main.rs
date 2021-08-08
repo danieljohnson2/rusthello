@@ -7,34 +7,31 @@ use cursive_aligned_view::Alignable;
 use std::cmp::*;
 
 mod board;
+mod game;
 mod cell;
 mod iterext;
 mod movement;
 
 use crate::board::*;
+use crate::game::*;
 use crate::cell::*;
 use crate::movement::*;
 
 /// A view to display the board's cells; it also
 /// tracks the cursor used by the player to make moves.
 struct BoardView {
-    board: BoardRef,
+    game: GameRef,
     cursor: Loc,
 }
 
 impl BoardView {
-    fn new(board: BoardRef) -> BoardView {
-        let cursor = get_default_cursor(&board);
-        return BoardView { board, cursor };
-
-        fn get_default_cursor(board: &BoardRef) -> Loc {
-            let b = board.borrow();
-            Loc::new(b.get_width() / 2, b.get_height() / 2)
-        }
+    fn new(game: GameRef) -> BoardView {
+        let cursor = game.borrow().get_board_center();
+        return BoardView { game, cursor };
     }
 
     fn get_bg_char(&self, xy: Vec2) -> &'static str {
-        let board = self.board.borrow();
+        let game = self.game.borrow();
         const LEFT: usize = 0b0001;
         const UP: usize = 0b0010;
         const RIGHT: usize = 0b0100;
@@ -45,8 +42,8 @@ impl BoardView {
         idx |= (UP | DOWN) * (!xy.x & 1);
         idx = clear_if(idx, LEFT, xy.x == 0);
         idx = clear_if(idx, UP, xy.y == 0);
-        idx = clear_if(idx, RIGHT, xy.x == board.get_width() * 2);
-        idx = clear_if(idx, DOWN, xy.y == board.get_height() * 2);
+        idx = clear_if(idx, RIGHT, xy.x == game.get_board_width() * 2);
+        idx = clear_if(idx, DOWN, xy.y == game.get_board_height() * 2);
 
         const BOX_CHARS: [&str; 16] = [
             " ", "╴", "╷", "┘", "╶", "─", "└", "┴", "╵", "┐", "│", "┤", "┌", "┬", "├", "┼",
@@ -63,36 +60,9 @@ impl BoardView {
         }
     }
 
-    fn has_any_moves(&mut self, cell: Cell) -> bool {
-        let board = self.board.borrow();
-        !board.find_valid_moves(cell).is_empty()
-    }
-
-    fn place_at_cursor(&mut self, cell: Cell) -> bool {
-        let mut board = self.board.borrow_mut();
-        let mv = Movement::new(&board, self.cursor, cell);
-
-        if mv.is_valid() {
-            mv.play(&mut board);
-            true
-        } else {
-            false
-        }
-    }
-
-    fn place_ai(&mut self, cell: Cell) -> bool {
-        let mut board = self.board.borrow_mut();
-        let valid = board.find_valid_moves(cell);
-        if !valid.is_empty() {
-            valid[0].play(&mut board);
-            true
-        } else {
-            false
-        }
-    }
-
     fn move_cursor(&mut self, dx: isize, dy: isize) -> bool {
-        let board = self.board.borrow();
+        let game = self.game.borrow();
+        let board = game.to_board();
         if let Some(l) = board.offset_within(self.cursor, dx, dy) {
             self.cursor = l;
             true
@@ -104,7 +74,8 @@ impl BoardView {
 
 impl View for BoardView {
     fn draw(&'_ self, printer: &Printer) {
-        let board = self.board.borrow();
+        let game = self.game.borrow();
+        let board = game.to_board();
         let height = board.get_height();
         let width = board.get_width();
         let cursor = self.cursor;
@@ -142,8 +113,8 @@ impl View for BoardView {
     }
 
     fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
-        let board = self.board.borrow();
-        Vec2::new(board.get_width() * 2 + 1, board.get_height() * 2 + 1)
+        let game = self.game.borrow();
+        Vec2::new(game.get_board_width() * 2 + 1, game.get_board_height() * 2 + 1)
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
@@ -165,11 +136,12 @@ impl View for BoardView {
         }
 
         fn make_move(me: &mut BoardView) -> EventResult {
-            if me.place_at_cursor(Cell::Black) {
+            let mut game = me.game.borrow_mut();
+            if game.place_at(me.cursor, Cell::Black) {
                 loop {
-                    let white_moved = me.place_ai(Cell::White);
+                    let white_moved = game.place_ai(Cell::White);
 
-                    if me.has_any_moves(Cell::Black) || !white_moved {
+                    if game.has_any_moves(Cell::Black) || !white_moved {
                         break;
                     }
                 }
@@ -182,18 +154,19 @@ impl View for BoardView {
 /// A view to display the score, and when the game is over
 /// it declares the winner.
 struct ScoreboardView {
-    board: BoardRef,
+    game: GameRef,
 }
 
 impl ScoreboardView {
-    pub fn new(board: BoardRef) -> ScoreboardView {
-        ScoreboardView { board }
+    pub fn new(game: GameRef) -> ScoreboardView {
+        ScoreboardView { game }
     }
 }
 
 impl View for ScoreboardView {
     fn draw(&self, printer: &Printer) {
-        let board = self.board.borrow();
+        let game = self.game.borrow();
+        let board = game.to_board();
         let game_over = board.is_game_over();
         let black_score = board.count_cells(Cell::Black);
         let white_score = board.count_cells(Cell::White);
@@ -223,11 +196,12 @@ impl View for ScoreboardView {
 
 fn main() {
     let mut siv = Cursive::default();
-    let board = Board::new(8, 8).into_ref();
-    let boardview = BoardView::new(board.clone());
+    let board = Board::new(8, 8);
+    let game = Game::new(board).into_ref();
+    let boardview = BoardView::new(game.clone());
 
     let scoreboard = ShadowView::new(Layer::with_color(
-        Panel::new(ScoreboardView::new(board).fixed_size((18, 3))),
+        Panel::new(ScoreboardView::new(game).fixed_size((18, 3))),
         ColorStyle::back(Color::Dark(BaseColor::White)),
     ))
     .align_center();

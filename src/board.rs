@@ -1,9 +1,7 @@
-use std::cell::RefCell;
 use std::cmp::*;
 use std::collections::*;
 use std::iter;
 use std::ops::*;
-use std::rc::Rc;
 
 use crate::cell::*;
 use crate::movement::*;
@@ -17,10 +15,6 @@ pub struct Board {
     cell_counts: HashMap<Cell, usize>,
     game_over: bool,
 }
-
-/// A reference to a mutable board, allowing the board
-/// to be shared by multiple views.
-pub type BoardRef = Rc<RefCell<Board>>;
 
 impl Board {
     /// Creates a new board with the usual pattern of initial
@@ -47,12 +41,6 @@ impl Board {
         board.update_board_info();
 
         board
-    }
-
-    /// Creates a BoardRef refering to this board,
-    /// which is copied into a RefCell.
-    pub fn into_ref(self) -> BoardRef {
-        BoardRef::new(RefCell::new(self))
     }
 
     /// The width of the board.
