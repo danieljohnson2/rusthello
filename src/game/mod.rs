@@ -10,6 +10,9 @@ pub use board::*;
 pub use cell::*;
 pub use movement::*;
 
+/// Game holds onto the board and all game state; it knows
+/// who gets the next move, and tracks on-going moves as they
+/// happen.
 pub struct Game {
     board: Board,
     next_move: Cell,
