@@ -81,7 +81,7 @@ impl BoardView {
             let xy = XY::new(loc.x * 2 + 1, loc.y * 2 + 1);
 
             if loc == cursor && !board.is_game_over() {
-                let candidate_move = Movement::new(&board, self.cursor, Cell::Black);
+                let candidate_move = Movement::new(board, self.cursor, Cell::Black);
                 let hilight = if candidate_move.is_valid() {
                     ColorStyle::back(Color::Light(BaseColor::White))
                 } else {
