@@ -4,15 +4,9 @@ use crate::iterext::*;
 /// Contains a move, which is a vec of cell changes to be
 //  made to execute the move. The move may be invalid,
 /// if it contains no changes to make.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Movement {
     flips: Vec<CellChange>,
-}
-
-impl Default for Movement {
-    fn default() -> Movement {
-        Movement { flips: Vec::new() }
-    }
 }
 
 impl Movement {
